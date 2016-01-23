@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
+	"os/signal"
 	"sort"
 	"strings"
 	"sync"
+	"syscall"
 )
 
 // Cluster groups a set of process Members.
@@ -91,6 +94,73 @@ func (c *Cluster) DoneSafely(w io.Writer) {
 	}()
 }
 
+func (c *Cluster) StartAll() error {
+	if len(c.NameToMember) == 0 {
+		return nil
+	}
+
+	// execute all members at the same time
+	c.wg.Add(len(c.NameToMember))
+	for name, m := range c.NameToMember {
+
+		go func(name string, m *Member) {
+
+			defer c.DoneSafely(m)
+
+			cs := []string{"/bin/bash", "-c", m.Command + " " + m.Flags.String()}
+			cmd := exec.Command(cs[0], cs[1:]...)
+			cmd.Stdin = nil
+			cmd.Stdout = m
+			cmd.Stderr = m
+
+			fmt.Fprintf(m, "Starting %s\n", name)
+			if err := cmd.Start(); err != nil {
+				fmt.Fprintf(m, "Failed to start %s\n", name)
+				return
+			}
+			m.cmd = cmd
+			m.PID = cmd.Process.Pid
+
+			cmd.Wait()
+
+			fmt.Fprintf(m, "Exiting %s\n", name)
+			return
+
+		}(name, m)
+
+	}
+
+	sc := make(chan os.Signal, 10)
+	go func() {
+		c.wg.Wait()
+		sc <- syscall.SIGINT
+	}()
+	signal.Notify(sc, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP)
+	<-sc
+
+	c.TerminateAll()
+	return nil
+}
+
+// TerminateAll terminates all members in the group.
+func (c *Cluster) TerminateAll() {
+	defer func() {
+		recover()
+	}()
+
+	if len(c.NameToMember) == 0 {
+		return
+	}
+
+	for _, m := range c.NameToMember {
+		if err := m.Terminate(); err != nil {
+			fmt.Fprintln(m, err)
+			continue
+		}
+		c.DoneSafely(m)
+	}
+}
+
 // Terminate terminates the process.
 func (c *Cluster) Terminate(name string) error {
 	if v, ok := c.NameToMember[name]; ok {
@@ -115,7 +185,7 @@ func (c *Cluster) Restart(name string) error {
 	return nil
 }
 
-// RemoveAllDataDirs removes all etcd data directoories.
+// RemoveAllDataDirs removes all etcd data directories.
 // Used for cleaning up.
 func (c *Cluster) RemoveAllDataDirs() {
 	for k, m := range c.NameToMember {
