@@ -3,14 +3,18 @@
 - etcd binaries
 - travis test
 
-============================================ IN PROGRESS
-
 - run package (etcd process runner) for demo(terminal)
 
 - demo(terminal) command
 - demo(terminal) tls example
 
 - update run package for demo(web)
+
+
+
+
+============================================ IN PROGRESS
+
 - demo(web) command
 - demo(web) frontend
 
