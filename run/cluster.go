@@ -115,9 +115,9 @@ func (c *Cluster) Restart(name string) error {
 	return nil
 }
 
-// RemoveAllData removes all etcd data directoories.
+// RemoveAllDataDirs removes all etcd data directoories.
 // Used for cleaning up.
-func (c *Cluster) RemoveAllData() {
+func (c *Cluster) RemoveAllDataDirs() {
 	for k, m := range c.NameToMember {
 		func() {
 			defer func() {
