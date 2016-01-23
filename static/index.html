@@ -25,6 +25,12 @@
             return split(term).pop();
         }
 
+        function appendLog(msg) {
+            msg = $("<div />").html(msg);
+            $("#log_output").append(msg);
+            $("#log_box").scrollTop($("#log_box")[0].scrollHeight);
+        }
+
         function runWithTimeout(callback, delay, times) {
             var internalCallback = function(t) {
                 return function() {
@@ -55,12 +61,6 @@
             }
         } else {
             appendLog($("<div><b>browser does not support WebSocket</b></div>"))
-        }
-
-        function appendLog(msg) {
-            $("#log_box").scrollTop($("#log_box")[0].scrollHeight);
-            msg = $("<div />").html(msg);
-            $("#log_output").append(msg);
         }
     });
     </script>
