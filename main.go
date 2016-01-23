@@ -2,6 +2,8 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -97,4 +99,46 @@ func init() {
 			}
 		}
 	}()
+}
+
+func init() {
+	rootCommand.PersistentFlags().StringVarP(&globalFlag.EtcdBinary, "etcd-binary", "b", "bin/etcd", "Path of executatble etcd binary.")
+	rootCommand.PersistentFlags().DurationVar(&globalFlag.IntervalPortRefresh, "port-refresh", 10*time.Second, "Interval to refresh free ports.")
+	rootCommand.PersistentFlags().DurationVar(&globalFlag.Timeout, "timeout", 5*time.Minute, "After timeout, etcd shuts down itself.")
+	rootCommand.PersistentFlags().IntVarP(&globalFlag.ClusterSize, "cluster-size", "n", 3, "Size of cluster to create.")
+
+	rootCommand.PersistentFlags().BoolVarP(&globalFlag.ProcSave, "proc-save", "s", false, "'true' to save the procfile to local disk.")
+	rootCommand.PersistentFlags().StringVar(&globalFlag.ProcPath, "proc-path", "Procfile", "Path of Procfile to save.")
+
+	demoCommand.PersistentFlags().BoolVar(&globalFlag.DemoSimple, "simple", false, "'true' to run demo without auto-termination.")
+	demoCommand.PersistentFlags().DurationVar(&globalFlag.DemoPause, "pause", 5*time.Second, "Duration to pause between demo operations.")
+	demoCommand.PersistentFlags().IntVar(&globalFlag.DemoConnectionNumber, "connection-number", 1, "Number of connections.")
+	demoCommand.PersistentFlags().IntVar(&globalFlag.DemoClientNumber, "client-number", 10, "Number of clients.")
+	demoCommand.PersistentFlags().IntVar(&globalFlag.DemoStressNumber, "stress-number", 10, "Size of stress requests.")
+	demoCommand.PersistentFlags().BoolVar(&globalFlag.DemoIsClientTLS, "client-tls", false, "'true' to set up client-to-server TLS.")
+	demoCommand.PersistentFlags().BoolVar(&globalFlag.DemoIsPeerTLS, "peer-tls", false, "'true' to set up peer-to-peer TLS.")
+	demoCommand.PersistentFlags().StringVar(&globalFlag.DemoCertPath, "cert-path", certPath, "CERT path.")
+	demoCommand.PersistentFlags().StringVar(&globalFlag.DemoPrivateKeyPath, "private-key-path", privateKeyPath, "Private key path.")
+	demoCommand.PersistentFlags().StringVar(&globalFlag.DemoCAPath, "ca-path", caPath, "CA path.")
+
+	demoWebCommand.PersistentFlags().BoolVar(&globalFlag.DemoWebSimple, "simple", false, "'true' to run demo without auto-termination.")
+	demoWebCommand.PersistentFlags().DurationVar(&globalFlag.DemoWebPause, "pause", 5*time.Second, "Duration to pause between demo operations.")
+	demoWebCommand.PersistentFlags().IntVar(&globalFlag.DemoWebConnectionNumber, "connection-number", 1, "Number of connections.")
+	demoWebCommand.PersistentFlags().IntVar(&globalFlag.DemoWebClientNumber, "client-number", 10, "Number of clients.")
+	demoWebCommand.PersistentFlags().IntVar(&globalFlag.DemoWebStressNumber, "stress-number", 10, "Size of stress requests.")
+
+	rootCommand.AddCommand(demoCommand)
+	rootCommand.AddCommand(demoWebCommand)
+	rootCommand.AddCommand(killCommand)
+}
+
+func init() {
+	cobra.EnablePrefixMatching = true
+}
+
+func main() {
+	if err := rootCommand.Execute(); err != nil {
+		fmt.Fprintln(os.Stdout, err)
+		os.Exit(1)
+	}
 }
