@@ -84,6 +84,7 @@ func demoWebCommandFunc(cmd *cobra.Command, args []string) {
 		handler: withUserCache(ContextHandlerFunc(startClusterHandler)),
 	})
 
+	fmt.Fprintln(os.Stdout, "Serving http://localhost"+demoWebPort)
 	if err := http.ListenAndServe(demoWebPort, mainRouter); err != nil {
 		fmt.Fprintln(os.Stdout, "[runDemoWeb - error]", err)
 		os.Exit(0)
