@@ -13,6 +13,7 @@
     <!-- Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/js/bootstrap.min.js" integrity="sha384-vZ2WRJMwsjRMW/8U7i6PWi6AlO1L79snBrmgiDpgIWJ82z8eA5lenwvxbMV1PAh7" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <!-- <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext" /> -->
     <script src="http://code.highcharts.com/highcharts.js"></script>
     <script src="http://code.highcharts.com/modules/exporting.js"></script>
     <script>
@@ -62,6 +63,245 @@
         } else {
             appendLog($("<div><b>browser does not support WebSocket</b></div>"))
         }
+
+        // var eventStream = new EventSource('/stream')
+        // eventStream.onopen = function(ev) {
+        //     console.log("connected to", ev.target.url);
+        // };
+        // eventStream.onmessage = function(ev) {
+        //     conn.send(ev.data);
+        //     // appendLog(ev.data);
+        // };
+        // eventStream.addEventListener('stream_log', function(ev) {
+        //     // conn.send(ev.data);
+        //     appendLog(ev.data);
+        // });
+
+        // setInterval(function() {
+        //     $.ajax({
+        //         url: '/stream',
+        //         success: function(ev) {
+        //             conn.send(ev);
+        //             // appendLog(ev);
+        //         }
+        //     });
+        // }, 1000);
+
+        // setInterval(function() {
+        //     $.ajax({
+        //         url: '/stream',
+        //         dataType: "json",
+        //         success: function(ev) {
+        //             if (ev.Size > 0) {
+        //                 conn.send(ev.Value);
+        //                 // appendLog(ev.Value); 
+        //             }
+        //         }
+        //     });
+        // }, 1000);
+
+        $('#start_cluster').click(function(e) {
+            e.preventDefault();
+            $.ajax({
+                type: "GET",
+                url: "/start_cluster",
+                async: true,
+                dataType: "html",
+                success: function(dataObj) {
+                    // conn.send(dataObj);
+                    appendLog(dataObj);
+                }
+            });
+        });
+        var receiveStream = function() {
+            $.ajax({
+                url: '/stream',
+                dataType: "json",
+                success: function(ev) {
+                    if (ev.Size > 0) {
+                        // conn.send(ev.Logs);
+                        appendLog(ev.Logs);
+                    }
+                }
+            });
+        }
+        $('#start_cluster').click(function(e) {
+            // TODO: dynamically change timeout
+            runWithTimeout(receiveStream, 700, 10);
+            runWithTimeout(receiveStream, 10000, 100);
+            runWithTimeout(receiveStream, 30000, 300);
+            runWithTimeout(receiveStream, 50000, 500);
+            runWithTimeout(receiveStream, 100000, 10000);
+        });
+
+        $('#start_stress').click(function(e) {
+            e.preventDefault();
+            $.ajax({
+                type: "GET",
+                url: "/start_stress",
+                async: true,
+                dataType: "html",
+                success: function(dataObj) {
+                    // conn.send(dataObj);
+                    appendLog(dataObj);
+                }
+            });
+        });
+
+        var receiveStats = function() {
+            $.ajax({
+                type: "GET",
+                url: '/stats',
+                async: true,
+                dataType: "html",
+                success: function(dataObj) {
+                    // conn.send(dataObj);
+                    appendLog(dataObj);
+                }
+            });
+        }
+        $('#start_cluster').click(function(e) {
+            runWithTimeout(receiveStats, 10000, 1000);
+        });
+
+        $("#list_ctl")
+            // don't navigate away from the field on tab when selecting an item
+            .on("click", function(event, ui) {
+                if (event.keyCode === $.ui.keyCode.TAB &&
+                    $(this).autocomplete("instance").menu.active) {
+                    event.preventDefault();
+                }
+            })
+            .autocomplete({
+                minLength: 0,
+                source: function(request, response) {
+                    $.ajax({
+                        type: "GET",
+                        url: "/list_ctl",
+                        dataType: "json",
+                        data: {
+                            q: request.term
+                        },
+                        success: function(dataObj) {
+                                response($.ui.autocomplete.filter(dataObj.Values, extractLast(request.term)));
+                            }
+                            // delegate back to autocomplete, but extract the last term
+                            // response($.ui.autocomplete.filter(availableVerticals, extractLast(request.term)));
+                    });
+                },
+                focus: function() {
+                    // prevent value inserted on focus
+                    return false;
+                }
+            });
+
+        $('#ctl').submit(function(e) {
+            e.preventDefault();
+            $.ajax({
+                type: "POST",
+                url: "/ctl",
+                data: $(this).serialize(),
+                success: function(dataObj) {
+                    $.ajax({
+                        type: "GET",
+                        url: "/ctl",
+                        async: true,
+                        dataType: "html",
+                        success: function(dataObj) {
+                            conn.send(dataObj);
+                            // appendLog(dataObj);
+                        }
+                    });
+                }
+            });
+        });
+
+        // document.getElementById('id_node3').className = "btn btn-danger-outline btn-sm";
+
+        $('#kill_1').click(function(e) {
+            e.preventDefault();
+            $.ajax({
+                type: "GET",
+                url: "/kill_1",
+                async: true,
+                dataType: "html",
+                success: function(dataObj) {
+                    // conn.send(dataObj);
+                    appendLog(dataObj);
+                }
+            });
+        });
+
+        $('#recover_1').click(function(e) {
+            e.preventDefault();
+            $.ajax({
+                type: "GET",
+                url: "/recover_1",
+                async: true,
+                dataType: "html",
+                success: function(dataObj) {
+                    // conn.send(dataObj);
+                    appendLog(dataObj);
+                }
+            });
+        });
+
+        $('#kill_2').click(function(e) {
+            e.preventDefault();
+            $.ajax({
+                type: "GET",
+                url: "/kill_2",
+                async: true,
+                dataType: "html",
+                success: function(dataObj) {
+                    // conn.send(dataObj);
+                    appendLog(dataObj);
+                }
+            });
+        });
+
+        $('#recover_2').click(function(e) {
+            e.preventDefault();
+            $.ajax({
+                type: "GET",
+                url: "/recover_2",
+                async: true,
+                dataType: "html",
+                success: function(dataObj) {
+                    // conn.send(dataObj);
+                    appendLog(dataObj);
+                }
+            });
+        });
+
+        $('#kill_3').click(function(e) {
+            e.preventDefault();
+            $.ajax({
+                type: "GET",
+                url: "/kill_3",
+                async: true,
+                dataType: "html",
+                success: function(dataObj) {
+                    // conn.send(dataObj);
+                    appendLog(dataObj);
+                }
+            });
+        });
+
+        $('#recover_3').click(function(e) {
+            e.preventDefault();
+            $.ajax({
+                type: "GET",
+                url: "/recover_3",
+                async: true,
+                dataType: "html",
+                success: function(dataObj) {
+                    // conn.send(dataObj);
+                    appendLog(dataObj);
+                }
+            });
+        });
+
     });
     </script>
     <style>
@@ -183,6 +423,14 @@
         height: 100%;
         font-family: "Trebuchet MS", "Helvetica", "Arial", "Verdana", "sans-serif";
         font-size: 25px;
+    }
+    
+    #log_box {
+        /*font-family: 'Roboto', sans-serif;*/
+        font-family: sans-serif;
+        font-size: 15px;
+        font-style: normal;
+        font-variant: normal;
     }
     </style>
     <title>runetcd</title>
