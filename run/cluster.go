@@ -22,7 +22,7 @@ type Cluster struct {
 }
 
 // CreateCluster creates a Cluster by parsing the input io.Reader.
-func CreateCluster(w io.Writer, command string, fs ...*Flags) (*Cluster, error) {
+func CreateCluster(w io.Writer, bufferStream chan string, outputOption OutputOption, command string, fs ...*Flags) (*Cluster, error) {
 
 	if len(fs) == 0 {
 		return nil, nil
@@ -55,8 +55,10 @@ func CreateCluster(w io.Writer, command string, fs ...*Flags) (*Cluster, error) 
 			pmu:                c.mu,
 			pmaxProcNameLength: c.maxProcNameLength,
 
-			colorIdx: colorIdx,
-			w:        w,
+			outputOption: outputOption,
+			colorIdx:     colorIdx,
+			w:            w,
+			BufferStream: bufferStream,
 
 			Command: command,
 			Flags:   f,

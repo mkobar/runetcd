@@ -23,7 +23,7 @@ func TestCreateCluster(t *testing.T) {
 		fs[i] = df
 	}
 	CombineFlags(fs...)
-	c, err := CreateCluster(os.Stdout, "bin/etcd", fs...)
+	c, err := CreateCluster(os.Stdout, nil, ToTerminal, "bin/etcd", fs...)
 	if err != nil {
 		t.Error(err)
 	}

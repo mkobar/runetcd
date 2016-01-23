@@ -4,11 +4,19 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net/http"
 	"os/exec"
 	"sync"
 	"syscall"
 
 	"github.com/fatih/color"
+)
+
+type OutputOption int
+
+const (
+	ToTerminal OutputOption = iota
+	ToHTML
 )
 
 // Member represents a process or command.
@@ -17,8 +25,10 @@ type Member struct {
 	pmu                *sync.Mutex
 	pmaxProcNameLength *int
 
-	colorIdx int
-	w        io.Writer
+	outputOption OutputOption
+	colorIdx     int
+	w            io.Writer
+	BufferStream chan string
 
 	Command string
 	Flags   *Flags
@@ -61,10 +71,21 @@ func (m *Member) Write(p []byte) (int, error) {
 
 			m.pmu.Lock()
 
-			color.Set(colors[m.colorIdx])
-			fmt.Fprintf(m.w, format, m.Flags.Name)
-			color.Unset()
-			fmt.Fprint(m.w, string(line))
+			switch m.outputOption {
+			case ToTerminal:
+				color.Set(colors[m.colorIdx])
+				fmt.Fprintf(m.w, format, m.Flags.Name)
+				color.Unset()
+				fmt.Fprint(m.w, string(line))
+			case ToHTML:
+				format = fmt.Sprintf(`<b><font color="%s">`, colorMap[colors[m.colorIdx]]) + format + "</font>" + "%s</b>"
+				m.BufferStream <- fmt.Sprintf(format, m.Flags.Name, line)
+				if f, ok := m.w.(http.Flusher); ok {
+					if f != nil {
+						f.Flush()
+					}
+				}
+			}
 
 			m.pmu.Unlock()
 
@@ -73,9 +94,12 @@ func (m *Member) Write(p []byte) (int, error) {
 	}
 
 	if len(p) > 0 && p[len(p)-1] != '\n' {
-		m.pmu.Lock()
-		fmt.Fprintln(m.w)
-		m.pmu.Unlock()
+		switch m.outputOption {
+		case ToTerminal:
+			m.pmu.Lock()
+			fmt.Fprintln(m.w)
+			m.pmu.Unlock()
+		}
 	}
 
 	return len(p), nil
