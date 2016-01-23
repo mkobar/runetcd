@@ -37,6 +37,26 @@
             window.setTimeout(internalCallback, delay);
         };
 
+        var conn;
+        var wsURL = "ws://localhost:8000/ws";
+        if (window["WebSocket"]) {
+            conn = new WebSocket(wsURL);
+            conn.onopen = function() {
+                console.log("connected to", wsURL);
+            }
+            conn.onclose = function(ev) {
+                appendLog($("<div><b>connection closed</b></div>"));
+            }
+            conn.onmessage = function(ev) {
+                appendLog(ev.data);
+            }
+            conn.onerror = function(ev) {
+                appendLog("ERROR: " + ev.data);
+            }
+        } else {
+            appendLog($("<div><b>browser does not support WebSocket</b></div>"))
+        }
+
         function appendLog(msg) {
             $("#log_box").scrollTop($("#log_box")[0].scrollHeight);
             msg = $("<div />").html(msg);
