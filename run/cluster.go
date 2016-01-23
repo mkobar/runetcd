@@ -3,12 +3,13 @@ package run
 import (
 	"fmt"
 	"io"
+	"os"
 	"sort"
 	"strings"
 	"sync"
 )
 
-// Cluster groups a set of process Membes.
+// Cluster groups a set of process Members.
 type Cluster struct {
 	// define in pointer type to not copy over cluster
 	mu                *sync.Mutex // guards the following
@@ -88,4 +89,46 @@ func (c *Cluster) DoneSafely(w io.Writer) {
 		}()
 		c.wg.Done()
 	}()
+}
+
+// Terminate terminates the process.
+func (c *Cluster) Terminate(name string) error {
+	if v, ok := c.NameToMember[name]; ok {
+		if err := v.Terminate(); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("%s does not exist in the Cluster!", name)
+	}
+	return nil
+}
+
+// Restart restarts the etcd member.
+func (c *Cluster) Restart(name string) error {
+	if v, ok := c.NameToMember[name]; ok {
+		if err := v.Restart(); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("%s does not exist in the Cluster!", name)
+	}
+	return nil
+}
+
+// RemoveAllData removes all etcd data directoories.
+// Used for cleaning up.
+func (c *Cluster) RemoveAllData() {
+	for k, m := range c.NameToMember {
+		func() {
+			defer func() {
+				if err := recover(); err != nil {
+					fmt.Fprintf(m, "panic while deleting %s (%v)\n", m.Flags.DataDir, err)
+				}
+			}()
+			fmt.Fprintf(m, "Deleting data-dir for %s (%s)\n", k, m.Flags.DataDir)
+			if err := os.RemoveAll(m.Flags.DataDir); err != nil {
+				fmt.Fprintf(m, "error while deleting %s (%v)\n", m.Flags.DataDir, err)
+			}
+		}()
+	}
 }
