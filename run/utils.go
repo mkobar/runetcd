@@ -1,7 +1,10 @@
 package run
 
 import (
+	"fmt"
 	"math/rand"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -42,4 +45,29 @@ func MultiRandBytes(bytesN, sliceN int) [][]byte {
 		}
 	}
 	return rs
+}
+
+func mapToCommaString(m map[string]struct{}) string {
+	if len(m) == 0 {
+		return ""
+	}
+	ss := []string{}
+	for k := range m {
+		ss = append(ss, k)
+	}
+	sort.Strings(ss)
+	return strings.TrimSpace(strings.Join(ss, ","))
+}
+
+func mapToMapString(m map[string]string) string {
+	if len(m) == 0 {
+		return ""
+	}
+	ss := []string{}
+	for k, v := range m {
+		val := fmt.Sprintf("%s=%s", k, v)
+		ss = append(ss, val)
+	}
+	sort.Strings(ss)
+	return strings.TrimSpace(strings.Join(ss, ","))
 }
