@@ -25,6 +25,18 @@
             return split(term).pop();
         }
 
+        function runWithTimeout(callback, delay, times) {
+            var internalCallback = function(t) {
+                return function() {
+                    if (--t > 0) {
+                        window.setTimeout(internalCallback, delay);
+                        callback();
+                    }
+                }
+            }(times);
+            window.setTimeout(internalCallback, delay);
+        };
+
         function appendLog(msg) {
             $("#log_box").scrollTop($("#log_box")[0].scrollHeight);
             msg = $("<div />").html(msg);
