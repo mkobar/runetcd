@@ -79,7 +79,7 @@ func demoWebCommandFunc(cmd *cobra.Command, args []string) {
 		handler: withUserCache(ContextHandlerFunc(wsHandler)),
 	})
 
-	mainRouter.Handle("/start", &ContextAdapter{
+	mainRouter.Handle("/start_cluster", &ContextAdapter{
 		ctx:     rootContext,
 		handler: withUserCache(ContextHandlerFunc(startClusterHandler)),
 	})
