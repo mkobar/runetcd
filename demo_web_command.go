@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/gophergala2016/runetcd/run"
 	"github.com/gorilla/websocket"
 	"github.com/satori/go.uuid"
@@ -307,6 +308,16 @@ func startStressHandler(ctx context.Context, w http.ResponseWriter, req *http.Re
 			return nil
 		}
 
+		globalCache.mu.Lock()
+		cs := globalCache.perUserID[userID].cluster
+		globalCache.mu.Unlock()
+
+		// TODO: print out readable k-v
+		if err := cs.Stress(w, nameToStress, globalFlag.DemoWebConnectionNumber, globalFlag.DemoWebClientNumber, globalFlag.DemoWebStressNumber, stressKeyN, stressValN); err != nil {
+			fmt.Printf("exiting with: %+v\n", err)
+			return err
+		}
+
 		fmt.Fprintln(w, boldHTMLMsg("Stress cluster successfully requested!!!"))
 
 	default:
@@ -316,6 +327,7 @@ func startStressHandler(ctx context.Context, w http.ResponseWriter, req *http.Re
 	return nil
 }
 
+// TODO: graph this
 func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 	user := ctx.Value(userKey).(*string)
 	userID := *user
@@ -331,6 +343,33 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 		if !toRun {
 			fmt.Fprintln(w, boldHTMLMsg("Cluster is not ready to provide stats!!!"))
 			return nil
+		}
+
+		globalCache.mu.Lock()
+		cs := globalCache.perUserID[userID].cluster
+		globalCache.mu.Unlock()
+
+		if vm, ls, err := cs.GetStats(); err != nil {
+			fmt.Printf("exiting with: %+v\n", err)
+			return err
+		} else {
+			fmt.Printf("%+v\n", vm)
+			fmt.Printf("[LEADER] %#q\n", ls)
+		}
+
+		if vm, err := cs.GetMetrics(); err != nil {
+			fmt.Fprintln(w, "exiting with:", err)
+			return err
+		} else {
+			for n, mm := range vm {
+				var fb uint64
+				if fv, ok := mm["etcd_storage_db_total_size_in_bytes"]; ok {
+					fb = uint64(fv)
+				}
+				fmt.Printf("%s: etcd_storage_keys_total             = %f\n", n, mm["etcd_storage_keys_total"])
+				fmt.Printf("%s: etcd_storage_db_total_size_in_bytes = %s\n", n, humanize.Bytes(fb))
+				fmt.Printf("\n")
+			}
 		}
 
 		fmt.Fprintln(w, boldHTMLMsg("Stats successfully requested!!!"))
@@ -497,79 +536,3 @@ func urlToName(s string) string {
 		return "unknown"
 	}
 }
-
-/*
-
-
-				time.Sleep(globalFlag.DemoPause)
-				fmt.Fprintf(w, "\n")
-				fmt.Fprintln(w, "####### Stressing one member")
-				if err := c.Stress(w, nameToStress, globalFlag.DemoConnectionNumber, globalFlag.DemoClientNumber, globalFlag.DemoStressNumber, stressKeyN, stressValN); err != nil {
-					fmt.Fprintln(w, "exiting with:", err)
-					return
-				}
-
-				time.Sleep(globalFlag.DemoPause)
-				fmt.Fprintf(w, "\n")
-				fmt.Fprintln(w, "####### Watch and Put")
-				if err := c.WatchAndPut(w, nameToStress, globalFlag.DemoConnectionNumber, globalFlag.DemoClientNumber, globalFlag.DemoStressNumber); err != nil {
-					fmt.Fprintln(w, "exiting with:", err)
-					return
-				}
-
-				time.Sleep(globalFlag.DemoPause)
-				fmt.Fprintf(w, "\n")
-				fmt.Fprintln(w, "####### Stats")
-				if vm, ls, err := c.GetStats(); err != nil {
-					fmt.Fprintln(w, "exiting with:", err)
-					return
-				} else {
-					fmt.Fprintf(w, "%+v\n", vm)
-					fmt.Fprintf(w, "[LEADER] %#q\n", ls)
-				}
-
-				time.Sleep(globalFlag.DemoPause)
-				fmt.Fprintf(w, "\n")
-				fmt.Fprintln(w, "####### Metrics")
-				if vm, err := c.GetMetrics(); err != nil {
-					fmt.Fprintln(w, "exiting with:", err)
-					return
-				} else {
-					for n, mm := range vm {
-						var fb uint64
-						if fv, ok := mm["etcd_storage_db_total_size_in_bytes"]; ok {
-							fb = uint64(fv)
-						}
-						fmt.Fprintf(w, "%s: etcd_storage_keys_total             = %f\n", n, mm["etcd_storage_keys_total"])
-						fmt.Fprintf(w, "%s: etcd_storage_db_total_size_in_bytes = %s\n", n, humanize.Bytes(fb))
-						fmt.Fprintf(w, "\n")
-					}
-				}
-			}()
-		}
-
-		select {
-		case <-clusterDone:
-			fmt.Fprintf(w, "\n")
-			fmt.Fprintln(w, "[runetcd demo END] etcd cluster terminated!")
-			fmt.Fprintf(w, "\n")
-			return nil
-		case <-operationDone:
-			fmt.Fprintf(w, "\n")
-			fmt.Fprintln(w, "[runetcd demo END] operation terminated!")
-			fmt.Fprintf(w, "\n")
-			return nil
-		case <-time.After(globalFlag.Timeout):
-			fmt.Fprintf(w, "\n")
-			fmt.Fprintln(w, "[runetcd demo END] timed out!")
-			fmt.Fprintf(w, "\n")
-			return nil
-		}
-
-	default:
-		http.Error(w, "Method Not Allowed", 405)
-	}
-
-	return nil
-}
-*/
