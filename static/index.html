@@ -232,11 +232,11 @@
             });
         });
 
-        $('#recover_1').click(function(e) {
+        $('#restart_1').click(function(e) {
             e.preventDefault();
             $.ajax({
                 type: "GET",
-                url: "/recover_1",
+                url: "/restart_1",
                 async: true,
                 dataType: "html",
                 success: function(dataObj) {
@@ -260,11 +260,11 @@
             });
         });
 
-        $('#recover_2').click(function(e) {
+        $('#restart_2').click(function(e) {
             e.preventDefault();
             $.ajax({
                 type: "GET",
-                url: "/recover_2",
+                url: "/restart_2",
                 async: true,
                 dataType: "html",
                 success: function(dataObj) {
@@ -288,11 +288,11 @@
             });
         });
 
-        $('#recover_3').click(function(e) {
+        $('#restart_3').click(function(e) {
             e.preventDefault();
             $.ajax({
                 type: "GET",
-                url: "/recover_3",
+                url: "/restart_3",
                 async: true,
                 dataType: "html",
                 success: function(dataObj) {
@@ -494,7 +494,7 @@
                                 <button class="btn btn-secondary-outline btn-sm">State</button>
                                 <button class="btn btn-secondary-outline btn-sm">Status</button>
                                 <button class="btn btn-danger" id="kill_1"><i class="fa fa-ban"></i></button>
-                                <button class="btn btn-success" id="recover_1"><i class="fa fa-ambulance"></i></button>
+                                <button class="btn btn-success" id="restart_1"><i class="fa fa-ambulance"></i></button>
                             </div>
                         </div>
                     </div>
@@ -510,7 +510,7 @@
                                 <button class="btn btn-secondary-outline btn-sm">State</button>
                                 <button class="btn btn-secondary-outline btn-sm">Status</button>
                                 <button class="btn btn-danger" id="kill_2"><i class="fa fa-ban"></i></button>
-                                <button class="btn btn-success" id="recover_2"><i class="fa fa-ambulance"></i></button>
+                                <button class="btn btn-success" id="restart_2"><i class="fa fa-ambulance"></i></button>
                             </div>
                         </div>
                     </div>
@@ -526,7 +526,7 @@
                                 <button class="btn btn-secondary-outline btn-sm">State</button>
                                 <button class="btn btn-secondary-outline btn-sm">Status</button>
                                 <button class="btn btn-danger" id="kill_3"><i class="fa fa-ban"></i></button>
-                                <button class="btn btn-success" id="recover_3"><i class="fa fa-ambulance"></i></button>
+                                <button class="btn btn-success" id="restart_3"><i class="fa fa-ambulance"></i></button>
                             </div>
                         </div>
                     </div>

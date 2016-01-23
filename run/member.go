@@ -108,14 +108,35 @@ func (m *Member) Write(p []byte) (int, error) {
 func (m *Member) Terminate() error {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Fprintf(m, "panic while Terminate member %s (%v)\n", m.Flags.Name, err)
+			switch m.outputOption {
+			case ToTerminal:
+				fmt.Fprintf(m, "panic while Terminate member %s (%v)\n", m.Flags.Name, err)
+			case ToHTML:
+				m.BufferStream <- fmt.Sprintf("panic while Terminate member %s (%v)\n", m.Flags.Name, err)
+				if f, ok := m.w.(http.Flusher); ok {
+					if f != nil {
+						f.Flush()
+					}
+				}
+			}
 		}
 	}()
 
 	if m.Terminated {
 		return fmt.Errorf("%s is already terminated", m.Flags.Name)
 	}
-	fmt.Fprintln(m, "Terminate:", m.Flags.Name)
+
+	switch m.outputOption {
+	case ToTerminal:
+		fmt.Fprintln(m, "Terminate:", m.Flags.Name)
+	case ToHTML:
+		m.BufferStream <- fmt.Sprintf("Terminate: %s", m.Flags.Name)
+		if f, ok := m.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
 
 	if err := syscall.Kill(m.PID, syscall.SIGKILL); err != nil {
 		return err
@@ -130,7 +151,17 @@ func (m *Member) Terminate() error {
 func (m *Member) Restart() error {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Fprintf(m, "panic while Restart member %s (%v)\n", m.Flags.Name, err)
+			switch m.outputOption {
+			case ToTerminal:
+				fmt.Fprintf(m, "panic while Restart member %s (%v)\n", m.Flags.Name, err)
+			case ToHTML:
+				m.BufferStream <- fmt.Sprintf("panic while Restart member %s (%v)\n", m.Flags.Name, err)
+				if f, ok := m.w.(http.Flusher); ok {
+					if f != nil {
+						f.Flush()
+					}
+				}
+			}
 		}
 	}()
 
@@ -146,7 +177,18 @@ func (m *Member) Restart() error {
 	cmd.Stdout = m
 	cmd.Stderr = m
 
-	fmt.Fprintln(m, "Restart:", m.Flags.Name)
+	switch m.outputOption {
+	case ToTerminal:
+		fmt.Fprintln(m, "Restart:", m.Flags.Name)
+	case ToHTML:
+		m.BufferStream <- fmt.Sprintf("Restart: %s", m.Flags.Name)
+		if f, ok := m.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
+
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("Failed to start %s with %v\n", m.Flags.Name, err)
 	}

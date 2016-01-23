@@ -183,17 +183,17 @@ func demoWebCommandFunc(cmd *cobra.Command, args []string) {
 		handler: withUserCache(ContextHandlerFunc(killHandler)),
 	})
 
-	mainRouter.Handle("/recover_1", &ContextAdapter{
+	mainRouter.Handle("/restart_1", &ContextAdapter{
 		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(recoverHandler)),
+		handler: withUserCache(ContextHandlerFunc(restartHandler)),
 	})
-	mainRouter.Handle("/recover_2", &ContextAdapter{
+	mainRouter.Handle("/restart_2", &ContextAdapter{
 		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(recoverHandler)),
+		handler: withUserCache(ContextHandlerFunc(restartHandler)),
 	})
-	mainRouter.Handle("/recover_3", &ContextAdapter{
+	mainRouter.Handle("/restart_3", &ContextAdapter{
 		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(recoverHandler)),
+		handler: withUserCache(ContextHandlerFunc(restartHandler)),
 	})
 
 	fmt.Fprintln(os.Stdout, "Serving http://localhost"+demoWebPort)
@@ -432,6 +432,14 @@ func killHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) 
 			return nil
 		}
 
+		globalCache.mu.Lock()
+		cs := globalCache.perUserID[userID].cluster
+		globalCache.mu.Unlock()
+
+		if err := cs.Terminate(urlToName(req.URL.String())); err != nil {
+			fmt.Fprintln(w, boldHTMLMsg("Terminate error "+urlToName(req.URL.String())))
+			return err
+		}
 		fmt.Fprintln(w, boldHTMLMsg("Kill successfully requested for "+urlToName(req.URL.String())))
 
 	default:
@@ -441,7 +449,7 @@ func killHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) 
 	return nil
 }
 
-func recoverHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+func restartHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 	user := ctx.Value(userKey).(*string)
 	userID := *user
 
@@ -458,7 +466,15 @@ func recoverHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 			return nil
 		}
 
-		fmt.Fprintln(w, boldHTMLMsg("Recover successfully requested for "+urlToName(req.URL.String())))
+		globalCache.mu.Lock()
+		cs := globalCache.perUserID[userID].cluster
+		globalCache.mu.Unlock()
+
+		if err := cs.Restart(urlToName(req.URL.String())); err != nil {
+			fmt.Fprintln(w, boldHTMLMsg("Restart error "+urlToName(req.URL.String())))
+			return err
+		}
+		fmt.Fprintln(w, boldHTMLMsg("Restart successfully requested for "+urlToName(req.URL.String())))
 
 	default:
 		http.Error(w, "Method Not Allowed", 405)
@@ -484,22 +500,6 @@ func urlToName(s string) string {
 
 /*
 
-				time.Sleep(globalFlag.DemoPause)
-				fmt.Fprintf(w, "\n")
-				fmt.Fprintln(w, "####### Trying to terminate one of the member")
-				if err := c.Terminate(nameToTerminate); err != nil {
-					fmt.Fprintln(w, "exiting with:", err)
-					return
-				}
-
-
-				time.Sleep(globalFlag.DemoPause)
-				fmt.Fprintf(w, "\n")
-				fmt.Fprintln(w, "####### Trying to restart that member")
-				if err := c.Restart(nameToTerminate); err != nil {
-					fmt.Fprintln(w, "exiting with:", err)
-					return
-				}
 
 				time.Sleep(globalFlag.DemoPause)
 				fmt.Fprintf(w, "\n")
