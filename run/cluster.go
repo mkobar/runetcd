@@ -20,6 +20,10 @@ type Cluster struct {
 // CreateCluster creates a Cluster by parsing the input io.Reader.
 func CreateCluster(w io.Writer, command string, fs ...*Flags) (*Cluster, error) {
 
+	if len(fs) == 0 {
+		return nil, nil
+	}
+
 	var maxProcNameLength int
 	c := &Cluster{
 		mu:                &sync.Mutex{},
@@ -58,6 +62,8 @@ func CreateCluster(w io.Writer, command string, fs ...*Flags) (*Cluster, error) 
 			cmd:        nil,
 		}
 		c.NameToMember[name] = m
+
+		colorIdx++
 	}
 
 	return c, nil
