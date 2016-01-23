@@ -1,12 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/gophergala2016/runetcd/run"
 	"github.com/gorilla/websocket"
+	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
 
@@ -62,5 +65,27 @@ func wsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) er
 		if err := c.WriteMessage(mt, message); err != nil {
 			return err
 		}
+	}
+}
+
+func demoWebCommandFunc(cmd *cobra.Command, args []string) {
+	rootContext, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	mainRouter := http.NewServeMux()
+	mainRouter.Handle("/", http.FileServer(http.Dir("./static")))
+	mainRouter.Handle("/ws", &ContextAdapter{
+		ctx:     rootContext,
+		handler: withUserCache(ContextHandlerFunc(wsHandler)),
+	})
+
+	mainRouter.Handle("/start", &ContextAdapter{
+		ctx:     rootContext,
+		handler: withUserCache(ContextHandlerFunc(startClusterHandler)),
+	})
+
+	if err := http.ListenAndServe(demoWebPort, mainRouter); err != nil {
+		fmt.Fprintln(os.Stdout, "[runDemoWeb - error]", err)
+		os.Exit(0)
 	}
 }
