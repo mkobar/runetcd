@@ -1,16 +1,181 @@
 <html lang="en">
 
 <head>
-<meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="author" content="Gyu-Ho Lee">
-<!-- jQuery -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.1.1/js/tether.min.js"></script>
-<script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
-<!-- Latest compiled and minified CSS -->
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/css/bootstrap.min.css" integrity="sha384-y3tfxAZXuh4HwSYylfB+J125MxIs6mR5FOHamPBG064zB+AFeWH94NdvaCBm8qnd" crossorigin="anonymous">
-<!-- Latest compiled and minified JavaScript -->
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/js/bootstrap.min.js" integrity="sha384-vZ2WRJMwsjRMW/8U7i6PWi6AlO1L79snBrmgiDpgIWJ82z8eA5lenwvxbMV1PAh7" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Gyu-Ho Lee">
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.1.1/js/tether.min.js"></script>
+    <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/css/bootstrap.min.css" integrity="sha384-y3tfxAZXuh4HwSYylfB+J125MxIs6mR5FOHamPBG064zB+AFeWH94NdvaCBm8qnd" crossorigin="anonymous">
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/js/bootstrap.min.js" integrity="sha384-vZ2WRJMwsjRMW/8U7i6PWi6AlO1L79snBrmgiDpgIWJ82z8eA5lenwvxbMV1PAh7" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+    <script>
+    $(document).ready(function() {
+        function split(val) {
+            return val.split(/,\s*/);
+        }
+
+        function extractLast(term) {
+            return split(term).pop();
+        }
+
+        function appendLog(msg) {
+            $("#log_box").scrollTop($("#log_box")[0].scrollHeight);
+            msg = $("<div />").html(msg);
+            $("#log_output").append(msg);
+        }
+    });
+    </script>
+    <style>
+    /*
+ * Base structure
+ */
+    /* Move down content because we have a fixed navbar that is 50px tall */
+    
+    body {
+        padding-top: 50px;
+    }
+    /*
+ * Global add-ons
+ */
+    
+    .sub-header {
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    /*
+ * Top navigation
+ * Hide default border to remove 1px line.
+ */
+    
+    .navbar-fixed-top {
+        border: 0;
+    }
+    /*
+ * Sidebar
+ */
+    /* Hide for mobile, show later */
+    
+    .sidebar {
+        display: none;
+    }
+    
+    @media (min-width: 768px) {
+        .sidebar {
+            position: fixed;
+            top: 51px;
+            bottom: 0;
+            left: 0;
+            z-index: 1000;
+            display: block;
+            padding: 20px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            /* Scrollable contents if viewport is shorter than content. */
+            background-color: #f5f5f5;
+            border-right: 1px solid #eee;
+        }
+    }
+    /* Sidebar navigation */
+    
+    .nav-sidebar {
+        margin-right: -21px;
+        /* 20px padding + 1px border */
+        margin-bottom: 20px;
+        margin-left: -20px;
+    }
+    
+    .nav-sidebar > li > a {
+        padding-right: 20px;
+        padding-left: 20px;
+    }
+    
+    .nav-sidebar > .active > a,
+    .nav-sidebar > .active > a:hover,
+    .nav-sidebar > .active > a:focus {
+        color: #fff;
+        background-color: #428bca;
+    }
+    /*
+ * Main content
+ */
+    
+    .main {
+        padding: 20px;
+    }
+    
+    @media (min-width: 768px) {
+        .main {
+            padding-right: 40px;
+            padding-left: 40px;
+        }
+    }
+    
+    .main .page-header {
+        margin-top: 0;
+    }
+    /*
+ * Placeholder dashboard ideas
+ */
+    
+    .placeholders {
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .placeholders h4 {
+        margin-bottom: 0;
+    }
+    
+    .placeholder {
+        margin-bottom: 20px;
+    }
+    
+    .placeholder img {
+        display: inline-block;
+        border-radius: 50%;
+    }
+    
+    .wrapper {
+        text-align: center;
+    }
+    
+    .ui-menu-item {
+        width: 100%;
+        height: 100%;
+        font-family: "Trebuchet MS", "Helvetica", "Arial", "Verdana", "sans-serif";
+        font-size: 25px;
+    }
+    </style>
+    <title>runetcd</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-dark navbar-fixed-top bg-inverse">
+        <button type="button" class="navbar-toggler hidden-sm-up" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">Run etcd</a>
+        <div id="navbar">
+            <nav class="nav navbar-nav pull-xs-left">
+                <a class="nav-item nav-link" href="https://github.com/coreos/etcd"><i class="fa fa-github fa-2x"></i></a>
+            </nav>
+        </div>
+    </nav>
+    <div class="container-fluid">
+    </div>
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://code.jquery.com/ui/1.12.0-beta.1/jquery-ui.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+</body>
+
 </html>
