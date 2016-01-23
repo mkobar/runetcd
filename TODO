@@ -1,0 +1,23 @@
+============================================ DONE
+
+- etcd binaries
+- travis test
+
+============================================ IN PROGRESS
+
+- run package (etcd process runner) for demo(terminal)
+
+- demo(terminal) command
+- demo(terminal) tls example
+
+- update run package for demo(web)
+- demo(web) command
+- demo(web) frontend
+
+- update run package for dashboard
+- dashboard command
+- dashboard frontend
+
+- statik for html, javascript dependencies
+- deploy to public
+- README, demo
