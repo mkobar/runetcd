@@ -1,6 +1,5 @@
 ## runetcd [![Build Status](https://img.shields.io/travis/gophergala2016/runetcd.svg?style=flat-square)](https://travis-ci.org/gophergala2016/runetcd) [![Godoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://godoc.org/github.com/gophergala2016/runetcd)
 
-<br>
 **Distributed Reliable Key-Value Store Visualized**
 <br>
 
