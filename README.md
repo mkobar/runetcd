@@ -81,35 +81,39 @@ You can use this as an `etcd` dashboard:
 
 ## Progress
 
-##### 00:07AM Sunday, January 24th, 2016
+##### Sun January 24 2016  00:07 AM 
 
 Add help page!
 
 ![changelogs_04](./changelogs/changelogs_04.png)
 
+and break time...
+
+![breaktime_01](./changelogs/breaktime_01.png)
+
 <br><br><br>
-##### 11:20PM Saturday, January 23rd, 2016
+##### Sat January 23 2016  11:20 PM
 
 Real-time metrics graphs up and running!
 
 ![changelogs_03](./changelogs/changelogs_03.png)
 
 <br><br><br>
-##### 7:17PM Saturday, January 23rd, 2016
+##### Sat January 23, 2016  07:17 PM
 
 Better node status display!
 
 ![changelogs_02](./changelogs/changelogs_02.png)
 
 <br><br><br>
-##### 5:30PM Saturday, January 23rd, 2016
+##### Sat January 23, 2016  05:30 PM
 
 Got some realtime updates, logs up and running!
 
 ![changelogs_01](./changelogs/changelogs_01.png)
 
 <br><br><br>
-##### 3AM Saturday, January 23rd, 2016
+##### Sat January 23, 2016  03:15 AM 
 
 CLI demo done!
 
