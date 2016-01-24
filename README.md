@@ -84,7 +84,7 @@ You can use this as an `etcd` dashboard:
 <br><br><br>
 ##### 7:17PM Saturday, January 23rd, 2016
 
-Better member status display!
+Better node status display!
 
 ![changelog_02](./changelogs/changelogs_02.png)
 

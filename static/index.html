@@ -157,10 +157,37 @@
                 marginRight: 10,
                 events: {
                     load: function() {
+                        // var series1 = this.series[0];
+                        // var series2 = this.series[1];
+                        // var series3 = this.series[2];
+                        // setInterval(function() {
+                        //     $.ajax({
+                        //         type: "GET",
+                        //         url: '/metrics',
+                        //         async: true,
+                        //         dataType: "json",
+                        //         success: function(dataObj) {
+                        //             var x = (new Date()).getTime();
+                        //             series1.addPoint({
+                        //                 x: x,
+                        //                 y: dataObj.Etcd1StorageKeysTotal
+                        //             }, true, true);
+                        //             series2.addPoint({
+                        //                 x: x,
+                        //                 y: dataObj.Etcd2StorageKeysTotal
+                        //             }, true, true);
+                        //             series3.addPoint({
+                        //                 x: x,
+                        //                 y: dataObj.Etcd3StorageKeysTotal
+                        //             }, true, true);
+                        //         }
+                        //     });
+                        // }, 5000);
+
                         var series1 = this.series[0];
                         var series2 = this.series[1];
                         var series3 = this.series[2];
-                        setInterval(function() {
+                        var receiveMetrics = function() {
                             $.ajax({
                                 type: "GET",
                                 url: '/metrics',
@@ -171,21 +198,21 @@
                                     series1.addPoint({
                                         x: x,
                                         y: dataObj.Etcd1StorageKeysTotal
-                                            // color: 
                                     }, true, true);
                                     series2.addPoint({
                                         x: x,
                                         y: dataObj.Etcd2StorageKeysTotal
-                                            // color: 
                                     }, true, true);
                                     series3.addPoint({
                                         x: x,
                                         y: dataObj.Etcd3StorageKeysTotal
-                                            // color: 
                                     }, true, true);
                                 }
                             });
-                        }, 5000);
+                        };
+                        runWithTimeout(receiveMetrics, 1000, 1);
+                        runWithTimeout(receiveMetrics, 10000, 1);
+                        runWithTimeout(receiveMetrics, 5000, 10000);
                     }
                 }
             },
@@ -221,6 +248,7 @@
             },
             series: [{
                 name: 'etcd1',
+                color: "#FFCC00", // orange
                 data: (function() {
                     var data = [],
                         time = (new Date()).getTime(),
@@ -235,6 +263,7 @@
                 }())
             }, {
                 name: 'etcd2',
+                color: "#04B4E3", // blue
                 data: (function() {
                     var data = [],
                         time = (new Date()).getTime(),
@@ -249,6 +278,7 @@
                 }())
             }, {
                 name: 'etcd3',
+                color: "#00695C", // teal
                 data: (function() {
                     var data = [],
                         time = (new Date()).getTime(),
@@ -271,16 +301,65 @@
                 marginRight: 10,
                 events: {
                     load: function() {
-                        // set up the updating of the chart each second
-                        var series = this.series[0];
-                        setInterval(function() {
-                            var y = Math.random();
-                            series.addPoint({
-                                x: (new Date()).getTime(),
-                                y: y,
-                                color: '#FF00FF'
-                            }, true, true);
-                        }, 5000);
+                        // var series1 = this.series[0];
+                        // var series2 = this.series[1];
+                        // var series3 = this.series[2];
+                        // setInterval(function() {
+                        //     $.ajax({
+                        //         type: "GET",
+                        //         url: '/metrics',
+                        //         async: true,
+                        //         dataType: "json",
+                        //         success: function(dataObj) {
+                        //             var x = (new Date()).getTime();
+                        //             series1.addPoint({
+                        //                 x: x,
+                        //                 y: dataObj.Etcd1StorageBytes
+                        //             }, true, true);
+                        //             series2.addPoint({
+                        //                 x: x,
+                        //                 y: dataObj.Etcd2StorageBytes
+                        //             }, true, true);
+                        //             series3.addPoint({
+                        //                 x: x,
+                        //                 y: dataObj.Etcd3StorageBytes
+                        //             }, true, true);
+                        //         }
+                        //     });
+                        // }, 5000);
+
+                        var series1 = this.series[0];
+                        var series2 = this.series[1];
+                        var series3 = this.series[2];
+                        var receiveMetrics = function() {
+                            $.ajax({
+                                type: "GET",
+                                url: '/metrics',
+                                async: true,
+                                dataType: "json",
+                                success: function(dataObj) {
+                                    var x = (new Date()).getTime();
+                                    series1.addPoint({
+                                        x: x,
+                                        y: dataObj.Etcd1StorageBytes
+                                        bytes: dataObj.Etcd1StorageBytesStr
+                                    }, true, true);
+                                    series2.addPoint({
+                                        x: x,
+                                        y: dataObj.Etcd2StorageBytes,
+                                        bytes: dataObj.Etcd2StorageBytesStr
+                                    }, true, true);
+                                    series3.addPoint({
+                                        x: x,
+                                        y: dataObj.Etcd3StorageBytes,
+                                        bytes: dataObj.Etcd3StorageBytesStr
+                                    }, true, true);
+                                }
+                            });
+                        };
+                        runWithTimeout(receiveMetrics, 100, 1);
+                        runWithTimeout(receiveMetrics, 10000, 1);
+                        runWithTimeout(receiveMetrics, 5000, 10000);
                     }
                 }
             },
@@ -293,7 +372,7 @@
             },
             yAxis: {
                 title: {
-                    text: 'MB'
+                    text: 'bytes'
                 },
                 plotLines: [{
                     value: 0,
@@ -305,7 +384,8 @@
                 formatter: function() {
                     return '<b>' + this.series.name + '</b><br/>' +
                         Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
-                        Highcharts.numberFormat(this.y, 2);
+                        Highcharts.numberFormat(this.y, 2) + '<br/>' +
+                        "(" + this.bytes + ")";
                 }
             },
             legend: {
@@ -315,9 +395,39 @@
                 enabled: false
             },
             series: [{
-                name: 'Storage Size',
+                name: 'etcd1',
+                color: "#FFCC00", // orange
                 data: (function() {
-                    // initialize the graph frame
+                    var data = [],
+                        time = (new Date()).getTime(),
+                        i;
+                    for (i = -19; i <= 0; i += 1) {
+                        data.push({
+                            x: time + i * 5000,
+                            y: 0
+                        });
+                    }
+                    return data;
+                }())
+            }, {
+                name: 'etcd2',
+                color: "#04B4E3", // blue
+                data: (function() {
+                    var data = [],
+                        time = (new Date()).getTime(),
+                        i;
+                    for (i = -19; i <= 0; i += 1) {
+                        data.push({
+                            x: time + i * 5000,
+                            y: 0
+                        });
+                    }
+                    return data;
+                }())
+            }, {
+                name: 'etcd3',
+                color: "#00695C", // teal
+                data: (function() {
                     var data = [],
                         time = (new Date()).getTime(),
                         i;
