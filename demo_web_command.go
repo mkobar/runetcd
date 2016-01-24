@@ -165,6 +165,10 @@ func demoWebCommandFunc(cmd *cobra.Command, args []string) {
 		ctx:     rootContext,
 		handler: withUserCache(ContextHandlerFunc(statsHandler)),
 	})
+	mainRouter.Handle("/metrics", &ContextAdapter{
+		ctx:     rootContext,
+		handler: withUserCache(ContextHandlerFunc(metricsHandler)),
+	})
 
 	mainRouter.Handle("/list_ctl", &ContextAdapter{
 		ctx:     rootContext,
@@ -339,7 +343,6 @@ func startStressHandler(ctx context.Context, w http.ResponseWriter, req *http.Re
 	return nil
 }
 
-// TODO: graph this
 func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 	user := ctx.Value(userKey).(*string)
 	userID := *user
@@ -359,18 +362,10 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 		globalCache.mu.Lock()
 		cs := globalCache.perUserID[userID].cluster
 		nameToStats, err := cs.GetStats()
-		var errMsg error
-		if err != nil {
-			errMsg = err
-		}
-		nameToMetrics, err := cs.GetMetrics()
-		if err != nil {
-			errMsg = err
-		}
 		globalCache.mu.Unlock()
-		if errMsg != nil {
-			globalCache.perUserID[userID].bufStream <- boldHTMLMsg(fmt.Sprintf("exiting with: %v", errMsg))
-			return errMsg
+		if err != nil {
+			globalCache.perUserID[userID].bufStream <- boldHTMLMsg(fmt.Sprintf("exiting with: %v", err))
+			return err
 		}
 
 		names := []string{}
@@ -383,44 +378,103 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 		}
 
 		resp := struct {
+			Etcd1Name  string
+			Etcd1ID    string
+			Etcd1State string
+
+			Etcd2Name  string
+			Etcd2ID    string
+			Etcd2State string
+
+			Etcd3Name  string
+			Etcd3ID    string
+			Etcd3State string
+		}{
+			names[0],
+			nameToStats[names[0]].ID,
+			nameToStats[names[0]].State,
+
+			names[1],
+			nameToStats[names[1]].ID,
+			nameToStats[names[1]].State,
+
+			names[2],
+			nameToStats[names[2]].ID,
+			nameToStats[names[2]].State,
+		}
+
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			return err
+		}
+
+	default:
+		http.Error(w, "Method Not Allowed", 405)
+	}
+
+	return nil
+}
+
+func metricsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+	user := ctx.Value(userKey).(*string)
+	userID := *user
+
+	switch req.Method {
+	case "GET":
+		toRun := false
+		globalCache.mu.Lock()
+		toRun = globalCache.perUserID[userID].cluster != nil
+		globalCache.mu.Unlock()
+
+		if !toRun {
+			globalCache.perUserID[userID].bufStream <- boldHTMLMsg("Cluster is not ready to provide metrics!!!")
+			return nil
+		}
+
+		globalCache.mu.Lock()
+		cs := globalCache.perUserID[userID].cluster
+		nameToMetrics, err := cs.GetMetrics()
+		globalCache.mu.Unlock()
+		if err != nil {
+			globalCache.perUserID[userID].bufStream <- boldHTMLMsg(fmt.Sprintf("exiting with: %v", err))
+			return err
+		}
+
+		names := []string{}
+		for n := range nameToMetrics {
+			names = append(names, n)
+		}
+		sort.Strings(names)
+		if len(names) != 3 {
+			return fmt.Errorf("expected 3 members but got %d members", len(names))
+		}
+
+		resp := struct {
 			Etcd1Name             string
-			Etcd1ID               string
-			Etcd1State            string
 			Etcd1StorageKeysTotal float64
 			Etcd1StorageBytes     float64
 			Etcd1StorageBytesStr  string
 
 			Etcd2Name             string
-			Etcd2ID               string
-			Etcd2State            string
 			Etcd2StorageKeysTotal float64
 			Etcd2StorageBytes     float64
 			Etcd2StorageBytesStr  string
 
 			Etcd3Name             string
-			Etcd3ID               string
-			Etcd3State            string
 			Etcd3StorageKeysTotal float64
 			Etcd3StorageBytes     float64
 			Etcd3StorageBytesStr  string
 		}{
 			names[0],
-			nameToStats[names[0]].ID,
-			nameToStats[names[0]].State,
 			nameToMetrics[names[0]]["etcd_storage_keys_total"],
 			nameToMetrics[names[0]]["etcd_storage_db_total_size_in_bytes"],
 			humanize.Bytes(uint64(nameToMetrics[names[0]]["etcd_storage_db_total_size_in_bytes"])),
 
 			names[1],
-			nameToStats[names[1]].ID,
-			nameToStats[names[1]].State,
 			nameToMetrics[names[1]]["etcd_storage_keys_total"],
 			nameToMetrics[names[1]]["etcd_storage_db_total_size_in_bytes"],
 			humanize.Bytes(uint64(nameToMetrics[names[1]]["etcd_storage_db_total_size_in_bytes"])),
 
 			names[2],
-			nameToStats[names[2]].ID,
-			nameToStats[names[2]].State,
 			nameToMetrics[names[2]]["etcd_storage_keys_total"],
 			nameToMetrics[names[2]]["etcd_storage_db_total_size_in_bytes"],
 			humanize.Bytes(uint64(nameToMetrics[names[2]]["etcd_storage_db_total_size_in_bytes"])),

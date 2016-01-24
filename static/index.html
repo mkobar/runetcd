@@ -14,8 +14,8 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/js/bootstrap.min.js" integrity="sha384-vZ2WRJMwsjRMW/8U7i6PWi6AlO1L79snBrmgiDpgIWJ82z8eA5lenwvxbMV1PAh7" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
     <!-- <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext" /> -->
-    <script src="http://code.highcharts.com/highcharts.js"></script>
-    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script>
     $(document).ready(function() {
         function split(val) {
@@ -145,76 +145,163 @@
                         document.getElementById('etcd3_state_button').className = "btn btn-secondary-outline";
                         document.getElementById('etcd3_state').className = "fa fa-pause-circle";
                     }
-
-                    // graph based on stats!
-                    // var data = dataObj.Values;
-                    // var range = data.length;
-                    // var xCategories = []
-                    // var dataSlice = []
-                    // for (i = 0; i < range; i++) {
-                    //     var tv = {
-                    //         name: Object.keys(data[i])[0],
-                    //         y: data[i][Object.keys(data[i])[0]][0],
-                    //         XXX: data[i][Object.keys(data[i])[0]][1],
-                    //         color: data[i][Object.keys(data[i])[0]][2]
-                    //     }
-                    //     xCategories.push(Object.keys(data[i])[0])
-                    //     dataSlice.push(tv)
-                    // }
-                    // var chart_yahoo_cpc_bar_mobile = {
-                    //     chart: {
-                    //         plotBackgroundColor: null,
-                    //         plotBorderWidth: null,
-                    //         plotShadow: false
-                    //     },
-                    //     title: {
-                    //         text: dataObj.Title
-                    //     },
-                    //     tooltip: {
-                    //         formatter: function() {
-                    //             return '<b>AAAA:</b> ' + this.key +
-                    //                 '<br><b>XXX:</b> ' + this.point.options.XXX;
-                    //         }
-                    //     },
-                    //     plotOptions: {
-                    //         column: {
-                    //             allowPointSelect: true,
-                    //             cursor: 'pointer',
-                    //             dataLabels: {
-                    //                 enabled: true,
-                    //                 style: {
-                    //                     color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black',
-                    //                     fontSize: '15px'
-                    //                 },
-                    //                 connectorPadding: 3,
-                    //                 connectorColor: 'silver'
-                    //             }
-                    //         }
-                    //     },
-                    //     xAxis: {
-                    //         categories: xCategories
-                    //     },
-                    //     yAxis: {
-                    //         title: {
-                    //             text: 'XXX'
-                    //         },
-                    //         labels: {
-                    //             formatter: function() {
-                    //                 // format bytes to megabytes
-                    //                 return
-                    //             }
-                    //         }
-                    //     },
-                    //     series: [{
-                    //         type: 'column',
-                    //         name: 'XXX Bar',
-                    //         data: dataSlice
-                    //     }]
-                    // }
-                    // $('#graph_id__________').highcharts(Highcharts.merge(graph_id__________, ThemePie));
                 }
             });
         }
+
+        var z = 0;
+
+        var receiveMetrics = function() {
+            $.ajax({
+                type: "GET",
+                url: '/metrics',
+                async: true,
+                dataType: "json",
+                success: function(dataObj) {
+                    console.log(z, dataObj);
+                    z = z + 1;
+                }
+            });
+        }
+
+        Highcharts.setOptions({
+            global: {
+                useUTC: false
+            }
+        });
+
+        $('#chart_total_keys').highcharts({
+            chart: {
+                type: 'spline',
+                animation: Highcharts.svg, // don't animate in old IE
+                marginRight: 10,
+                events: {
+                    load: function() {
+
+                        // set up the updating of the chart each second
+                        var series = this.series[0];
+                        setInterval(function() {
+                            var x = (new Date()).getTime(), // current time
+                                y = Math.random();
+                            series.addPoint([x, y], true, true);
+                        }, 1000);
+                    }
+                }
+            },
+            title: {
+                text: 'Live random data'
+            },
+            xAxis: {
+                type: 'datetime',
+                tickPixelInterval: 150
+            },
+            yAxis: {
+                title: {
+                    text: 'Value'
+                },
+                plotLines: [{
+                    value: 0,
+                    width: 1,
+                    color: '#808080'
+                }]
+            },
+            tooltip: {
+                formatter: function() {
+                    return '<b>' + this.series.name + '</b><br/>' +
+                        Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+                        Highcharts.numberFormat(this.y, 2);
+                }
+            },
+            legend: {
+                enabled: false
+            },
+            exporting: {
+                enabled: false
+            },
+            series: [{
+                name: 'Random data',
+                data: (function() {
+                    // generate an array of random data
+                    var data = [],
+                        var time = (new Date()).getTime(),
+                            i;
+
+                    for (i = -19; i <= 0; i += 1) {
+                        data.push({
+                            x: time + i * 1000,
+                            y: Math.random()
+                        });
+                    }
+                    return data;
+                }())
+            }]
+        });
+
+        // var data = dataObj.Values;
+        // var range = data.length;
+        // var xCategories = []
+        // var dataSlice = []
+        // for (i = 0; i < range; i++) {
+        //     var tv = {
+        //         name: Object.keys(data[i])[0],
+        //         y: data[i][Object.keys(data[i])[0]][0],
+        //         XXX: data[i][Object.keys(data[i])[0]][1],
+        //         color: data[i][Object.keys(data[i])[0]][2]
+        //     }
+        //     xCategories.push(Object.keys(data[i])[0])
+        //     dataSlice.push(tv)
+        // }
+        // var chart_yahoo_cpc_bar_mobile = {
+        //     chart: {
+        //         plotBackgroundColor: null,
+        //         plotBorderWidth: null,
+        //         plotShadow: false
+        //     },
+        //     title: {
+        //         text: dataObj.Title
+        //     },
+        //     tooltip: {
+        //         formatter: function() {
+        //             return '<b>AAAA:</b> ' + this.key +
+        //                 '<br><b>XXX:</b> ' + this.point.options.XXX;
+        //         }
+        //     },
+        //     plotOptions: {
+        //         column: {
+        //             allowPointSelect: true,
+        //             cursor: 'pointer',
+        //             dataLabels: {
+        //                 enabled: true,
+        //                 style: {
+        //                     color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black',
+        //                     fontSize: '15px'
+        //                 },
+        //                 connectorPadding: 3,
+        //                 connectorColor: 'silver'
+        //             }
+        //         }
+        //     },
+        //     xAxis: {
+        //         categories: xCategories
+        //     },
+        //     yAxis: {
+        //         title: {
+        //             text: 'XXX'
+        //         },
+        //         labels: {
+        //             formatter: function() {
+        //                 // format bytes to megabytes
+        //                 return
+        //             }
+        //         }
+        //     },
+        //     series: [{
+        //         type: 'column',
+        //         name: 'XXX Bar',
+        //         data: dataSlice
+        //     }]
+        // }
+        // $('#graph_id__________').highcharts(Highcharts.merge(graph_id__________, ThemePie));
 
         // var eventStream = new EventSource('/stream')
         // eventStream.onopen = function(ev) {
@@ -279,6 +366,9 @@
             runWithTimeout(receiveStats, 100, 1);
             runWithTimeout(receiveStats, 2000, 3);
             runWithTimeout(receiveStats, 10000, 1000);
+        });
+        $('#start_cluster').click(function(e) {
+            runWithTimeout(receiveMetrics, 10000, 1000);
         });
 
         $('#start_stress').click(function(e) {
@@ -711,17 +801,13 @@
                             <div class="col-md-6">
                                 <div class="card card-block">
                                     <h3 class="card-title" align="center">Total Keys</h3>
-                                    <div id="chart_total_keys">
-                                        ...
-                                    </div>
+                                    <div id="chart_total_keys" style="max-width: 370px; height: 350px; margin: 0 auto"></div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="card card-block">
                                     <h3 class="card-title" align="center">Total Storage (MB)</h3>
-                                    <div id="chart_total_keys">
-                                        ...
-                                    </div>
+                                    <div id="chart_total_megabytes" style="max-width: 370px; height: 350px; margin: 0 auto"></div>
                                 </div>
                             </div>
                         </div>
