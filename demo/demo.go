@@ -21,6 +21,7 @@ type Flag struct {
 	ProcSave            bool
 	ProcPath            string
 	IsSimple            bool
+	IsSimpleSimulation  bool
 	Pause               time.Duration
 	ConnectionNumber    int
 	ClientNumber        int
@@ -73,6 +74,7 @@ func init() {
 	Command.PersistentFlags().BoolVarP(&cmdFlag.ProcSave, "proc-save", "s", false, "'true' to save the procfile to local disk.")
 	Command.PersistentFlags().StringVar(&cmdFlag.ProcPath, "proc-path", "Procfile", "Path of Procfile to save.")
 	Command.PersistentFlags().BoolVar(&cmdFlag.IsSimple, "simple", false, "'true' to run demo without auto-termination.")
+	Command.PersistentFlags().BoolVar(&cmdFlag.IsSimpleSimulation, "simple-simulation", false, "'true' to run demo without auto-termination and some stressing. It overrides 'simple' flag.")
 	Command.PersistentFlags().DurationVar(&cmdFlag.Pause, "pause", 5*time.Second, "Duration to pause between demo operations.")
 	Command.PersistentFlags().IntVar(&cmdFlag.ConnectionNumber, "connection-number", 1, "Number of connections.")
 	Command.PersistentFlags().IntVar(&cmdFlag.ClientNumber, "client-number", 10, "Number of clients.")
@@ -135,7 +137,29 @@ func CommandFunc(cmd *cobra.Command, args []string) {
 	}()
 
 	operationDone := make(chan struct{})
-	if !cmdFlag.IsSimple {
+
+	if cmdFlag.IsSimpleSimulation {
+
+		go func() {
+			time.Sleep(cmdFlag.Pause)
+			fmt.Fprintf(os.Stdout, "\n")
+			fmt.Fprintln(os.Stdout, "####### Stress")
+			if err := c.Stress(cmdFlag.ConnectionNumber, cmdFlag.ClientNumber, cmdFlag.StressNumber, 15, 15); err != nil {
+				fmt.Fprintln(os.Stdout, "exiting with:", err)
+				return
+			}
+
+			time.Sleep(cmdFlag.Pause)
+			fmt.Fprintf(os.Stdout, "\n")
+			fmt.Fprintln(os.Stdout, "####### SimpleStress")
+			if err := c.SimpleStress(); err != nil {
+				fmt.Fprintln(os.Stdout, "exiting with:", err)
+				return
+			}
+		}()
+
+	} else if !cmdFlag.IsSimple {
+
 		go func() {
 			defer func() {
 				operationDone <- struct{}{}
@@ -275,6 +299,7 @@ func CommandFunc(cmd *cobra.Command, args []string) {
 				fmt.Println()
 			}
 		}()
+
 	}
 
 	select {
