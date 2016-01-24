@@ -12,7 +12,7 @@ runetcd runs, demos [`etcd`](https://github.com/coreos/etcd) with CLIs and dashb
 - [**_10-second Demo_**](#10-second-demo)
 - [Dashboard for production](#dashboard-for-production)
 - [Credits](#credits)
-- [TODO](#todo)
+- [Progress](#progress)
 
 [↑ top](#runetcd--)
 <br><br>
@@ -71,6 +71,26 @@ You can use this as an `etcd` dashboard:
 - https://github.com/rakyll/statik
 - https://github.com/mattn/goreman
 - https://github.com/gyuho/psn
+
+[↑ top](#runetcd--)
+<br><br>
+
+
+## Progress
+
+<br>
+##### 5:30PM Saturday, January 23, 2016
+
+Got some realtime updates, logs up and running!
+
+![changelog_01](demos/changelog_01)
+
+<br>
+##### 3AM Saturday, January 23, 2016
+
+CLI demo done.
+
+![changelog_01](demos/changelog_00)
 
 [↑ top](#runetcd--)
 <br><br>

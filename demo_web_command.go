@@ -376,18 +376,21 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 
 			Etcd1Name             string
 			Etcd1ID               string
+			Etcd1State            string
 			Etcd1StorageKeysTotal float64
 			Etcd1StorageBytes     float64
 			Etcd1StorageBytesStr  string
 
 			Etcd2Name             string
 			Etcd2ID               string
+			Etcd2State            string
 			Etcd2StorageKeysTotal float64
 			Etcd2StorageBytes     float64
 			Etcd2StorageBytesStr  string
 
 			Etcd3Name             string
 			Etcd3ID               string
+			Etcd3State            string
 			Etcd3StorageKeysTotal float64
 			Etcd3StorageBytes     float64
 			Etcd3StorageBytesStr  string
@@ -396,18 +399,21 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 
 			names[0],
 			nameToStats[names[0]].ID,
+			nameToStats[names[0]].State,
 			nameToMetrics[names[0]]["etcd_storage_keys_total"],
 			nameToMetrics[names[0]]["etcd_storage_db_total_size_in_bytes"],
 			humanize.Bytes(uint64(nameToMetrics[names[0]]["etcd_storage_db_total_size_in_bytes"])),
 
 			names[1],
 			nameToStats[names[1]].ID,
+			nameToStats[names[1]].State,
 			nameToMetrics[names[1]]["etcd_storage_keys_total"],
 			nameToMetrics[names[1]]["etcd_storage_db_total_size_in_bytes"],
 			humanize.Bytes(uint64(nameToMetrics[names[1]]["etcd_storage_db_total_size_in_bytes"])),
 
 			names[2],
 			nameToStats[names[2]].ID,
+			nameToStats[names[2]].State,
 			nameToMetrics[names[2]]["etcd_storage_keys_total"],
 			nameToMetrics[names[2]]["etcd_storage_db_total_size_in_bytes"],
 			humanize.Bytes(uint64(nameToMetrics[names[2]]["etcd_storage_db_total_size_in_bytes"])),

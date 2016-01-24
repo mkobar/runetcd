@@ -157,10 +157,18 @@
                 success: function(dataObj) {
                     document.getElementById('etcd1_name').innerHTML = "Name: <b>" + dataObj.Etcd1Name + "</b>";
                     document.getElementById('etcd1_id').innerHTML = "ID: <b>" + dataObj.Etcd1ID + "</b>";
+                    document.getElementById('etcd1_state_button').className = "btn btn-primary";
+                    document.getElementById('etcd1_state').className = "fa fa-heartbeat";
+
                     document.getElementById('etcd2_name').innerHTML = "Name: <b>" + dataObj.Etcd2Name + "</b>";
                     document.getElementById('etcd2_id').innerHTML = "ID: <b>" + dataObj.Etcd2ID + "</b>";
+                    document.getElementById('etcd2_state_button').className = "btn btn-primary";
+                    document.getElementById('etcd2_state').className = "fa fa-heartbeat";
+
                     document.getElementById('etcd3_name').innerHTML = "Name: <b>" + dataObj.Etcd3Name + "</b>";
                     document.getElementById('etcd3_id').innerHTML = "ID: <b>" + dataObj.Etcd3ID + "</b>";
+                    document.getElementById('etcd3_state_button').className = "btn btn-primary";
+                    document.getElementById('etcd3_state').className = "fa fa-heartbeat";
                 }
             });
         }
@@ -219,8 +227,6 @@
                 }
             });
         });
-
-        // document.getElementById('id_node3').className = "btn btn-danger-outline btn-sm";
 
         $('#kill_1').click(function(e) {
             e.preventDefault();
@@ -494,8 +500,8 @@
                                 </ul>
                             </p>
                             <div class="wrapper">
-                                <button class="btn btn-secondary-outline btn-sm">State</button>
-                                <button class="btn btn-danger" id="kill_1"><i class="fa fa-ban"></i></button>
+                                <button id="etcd1_state_button" class="btn btn-secondary-outline"><i id="etcd1_state" class="fa fa-pause-circle"></i></button>
+                                <button class="btn btn-danger" id="kill_1"><i class="fa fa-bomb"></i></button>
                                 <button class="btn btn-success" id="restart_1"><i class="fa fa-ambulance"></i></button>
                             </div>
                         </div>
@@ -509,8 +515,8 @@
                                 </ul>
                             </p>
                             <div class="wrapper">
-                                <button class="btn btn-secondary-outline btn-sm">State</button>
-                                <button class="btn btn-danger" id="kill_2"><i class="fa fa-ban"></i></button>
+                                <button id="etcd2_state_button" class="btn btn-secondary-outline"><i id="etcd2_state" class="fa fa-pause-circle"></i></button>
+                                <button class="btn btn-danger" id="kill_2"><i class="fa fa-bomb"></i></button>
                                 <button class="btn btn-success" id="restart_2"><i class="fa fa-ambulance"></i></button>
                             </div>
                         </div>
@@ -524,8 +530,8 @@
                                 </ul>
                             </p>
                             <div class="wrapper">
-                                <button class="btn btn-secondary-outline btn-sm">State</button>
-                                <button class="btn btn-danger" id="kill_3"><i class="fa fa-ban"></i></button>
+                                <button id="etcd3_state_button" class="btn btn-secondary-outline"><i id="etcd3_state" class="fa fa-pause-circle"></i></button>
+                                <button class="btn btn-danger" id="kill_3"><i class="fa fa-bomb"></i></button>
                                 <button class="btn btn-success" id="restart_3"><i class="fa fa-ambulance"></i></button>
                             </div>
                         </div>
