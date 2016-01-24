@@ -692,44 +692,79 @@ type ServerStats struct {
 	SendingBandwidthRate float64 `json:"sendBandwidthRate,omitempty"`
 }
 
-// GetStats returns the leader of the cluster.
-func (c *Cluster) GetStats() (map[string]ServerStats, error) {
-	nameToEndpoint := make(map[string][]string)
+// GetStats gets the statistics of the cluster.
+func (c *Cluster) GetStats() (map[string]ServerStats, map[string]string, error) {
+	nameToEndpoints := make(map[string][]string)
 	for n, nd := range c.NameToNode {
 		for v := range nd.Flags.ListenClientURLs {
-			if _, ok := nameToEndpoint[n]; !ok {
-				nameToEndpoint[n] = []string{}
+			if _, ok := nameToEndpoints[n]; !ok {
+				nameToEndpoints[n] = []string{}
 			}
-			nameToEndpoint[n] = append(nameToEndpoint[n], v)
+			nameToEndpoints[n] = append(nameToEndpoints[n], v)
 		}
 	}
 
 	rm := make(map[string]ServerStats)
-	for name, endpoints := range nameToEndpoint {
+	nameToEndpoint := make(map[string]string)
+	for name, endpoints := range nameToEndpoints {
 		for _, endpoint := range endpoints {
 			sts := ServerStats{}
 			resp, err := http.Get(endpoint + "/v2/stats/self")
 			if err != nil {
-				sts.Name = rm[name].Name
-				sts.ID = rm[name].ID
+				sts.Name = name
+				sts.ID = ""
 				sts.State = "Unreachable"
-				rm[name] = sts
+				rm[endpoint] = sts
+				nameToEndpoint[name] = endpoint
 				continue
 			}
 
 			if err := json.NewDecoder(resp.Body).Decode(&sts); err != nil {
-				sts.Name = rm[name].Name
-				sts.ID = rm[name].ID
+				sts.Name = name
+				sts.ID = ""
 				sts.State = "Unreachable"
-				rm[name] = sts
+				rm[endpoint] = sts
+				nameToEndpoint[name] = endpoint
 				continue
 			}
 			resp.Body.Close()
-			rm[name] = sts
+
+			rm[endpoint] = sts
+			nameToEndpoint[name] = endpoint
+			break // use only one client URL
 		}
 	}
 
-	return rm, nil
+	return rm, nameToEndpoint, nil
+}
+
+// GetStats gets the statistics of the cluster.
+func GetStats(endpoints ...string) (map[string]ServerStats, map[string]string, error) {
+	rm := make(map[string]ServerStats)
+	nameToEndpoint := make(map[string]string)
+	for _, endpoint := range endpoints {
+		sts := ServerStats{}
+		resp, err := http.Get(endpoint + "/v2/stats/self")
+		if err != nil {
+			sts.ID = ""
+			sts.State = "Unreachable"
+			rm[endpoint] = sts
+			continue
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&sts); err != nil {
+			sts.ID = ""
+			sts.State = "Unreachable"
+			rm[endpoint] = sts
+			continue
+		}
+		resp.Body.Close()
+
+		rm[endpoint] = sts
+		nameToEndpoint[sts.Name] = endpoint
+	}
+
+	return rm, nameToEndpoint, nil
 }
 
 // GetMetrics returns the metrics of the cluster.
@@ -737,27 +772,36 @@ func (c *Cluster) GetStats() (map[string]ServerStats, error) {
 // Some useful metrics:
 // 	- etcd_storage_keys_total
 // 	- etcd_storage_db_total_size_in_bytes
-func (c *Cluster) GetMetrics() (map[string]map[string]float64, error) {
+// 	- etcd_storage_db_total_size_in_bytes
+// 	- etcd_storage_db_total_size_in_bytes
+// 	- etcd_storage_db_total_size_in_bytes
+// 	- etcd_storage_db_total_size_in_bytes
+// 	- etcd_storage_db_total_size_in_bytes
+// 	- etcd_storage_db_total_size_in_bytes
+//
+func (c *Cluster) GetMetrics() (map[string]map[string]float64, map[string]string, error) {
+	nameToEndpoints := make(map[string][]string)
+	for n, m := range c.NameToNode {
+		for v := range m.Flags.ListenClientURLs {
+			if _, ok := nameToEndpoints[n]; !ok {
+				nameToEndpoints[n] = []string{}
+			}
+			nameToEndpoints[n] = append(nameToEndpoints[n], v)
+		}
+	}
+
 	emptyMap := map[string]float64{
 		"etcd_storage_keys_total":             0.0,
 		"etcd_storage_db_total_size_in_bytes": 0.0,
 	}
-	nameToEndpoint := make(map[string][]string)
-	for n, m := range c.NameToNode {
-		for v := range m.Flags.ListenClientURLs {
-			if _, ok := nameToEndpoint[n]; !ok {
-				nameToEndpoint[n] = []string{}
-			}
-			nameToEndpoint[n] = append(nameToEndpoint[n], v)
-		}
-	}
-
 	rm := make(map[string]map[string]float64)
-	for name, endpoints := range nameToEndpoint {
+	nameToEndpoint := make(map[string]string)
+	for name, endpoints := range nameToEndpoints {
 		for _, endpoint := range endpoints {
 			resp, err := http.Get(endpoint + "/metrics")
 			if err != nil {
-				rm[name] = emptyMap
+				rm[endpoint] = emptyMap
+				nameToEndpoint[name] = endpoint
 				continue
 			}
 
@@ -780,14 +824,77 @@ func (c *Cluster) GetMetrics() (map[string]map[string]float64, error) {
 				mm[ts[0]] = fv
 			}
 			if err := scanner.Err(); err != nil {
-				rm[name] = emptyMap
+				rm[endpoint] = emptyMap
+				nameToEndpoint[name] = endpoint
 				continue
 			}
-
 			resp.Body.Close()
-			rm[name] = mm
+
+			rm[endpoint] = mm
+			nameToEndpoint[name] = endpoint
+			break // use only one client URL
 		}
 	}
 
-	return rm, nil
+	return rm, nameToEndpoint, nil
+}
+
+// GetMetrics returns the metrics of the cluster.
+//
+// Some useful metrics:
+// 	- etcd_storage_keys_total
+// 	- etcd_storage_db_total_size_in_bytes
+// 	- etcd_storage_db_total_size_in_bytes
+// 	- etcd_storage_db_total_size_in_bytes
+// 	- etcd_storage_db_total_size_in_bytes
+// 	- etcd_storage_db_total_size_in_bytes
+// 	- etcd_storage_db_total_size_in_bytes
+// 	- etcd_storage_db_total_size_in_bytes
+//
+func GetMetrics(endpoints ...string) (map[string]map[string]float64, map[string]string, error) {
+	_, nameToEndpoint, err := GetStats(endpoints...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	emptyMap := map[string]float64{
+		"etcd_storage_keys_total":             0.0,
+		"etcd_storage_db_total_size_in_bytes": 0.0,
+	}
+	rm := make(map[string]map[string]float64)
+	for _, endpoint := range endpoints {
+		resp, err := http.Get(endpoint + "/metrics")
+		if err != nil {
+			rm[endpoint] = emptyMap
+			continue
+		}
+
+		scanner := bufio.NewScanner(resp.Body)
+
+		mm := make(map[string]float64)
+		for scanner.Scan() {
+			txt := scanner.Text()
+			if strings.HasPrefix(txt, "#") {
+				continue
+			}
+			ts := strings.SplitN(txt, " ", 2)
+			fv := 0.0
+			if len(ts) == 2 {
+				v, err := strconv.ParseFloat(ts[1], 64)
+				if err == nil {
+					fv = v
+				}
+			}
+			mm[ts[0]] = fv
+		}
+		if err := scanner.Err(); err != nil {
+			rm[endpoint] = emptyMap
+			continue
+		}
+		resp.Body.Close()
+
+		rm[endpoint] = mm
+	}
+
+	return rm, nameToEndpoint, nil
 }

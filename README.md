@@ -79,6 +79,13 @@ You can use this as an `etcd` dashboard:
 ## Progress
 
 <br><br><br>
+##### Sun January 24 2016 10:31 AM
+
+Outlines dashboard frontend.
+
+![changelogs_06](./changelogs/changelogs_06.png)
+
+<br><br><br>
 ##### Sun January 24 2016 05:02 AM
 
 Added `etcdctlv3` interface!

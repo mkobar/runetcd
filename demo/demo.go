@@ -3,6 +3,7 @@ package demo
 import (
 	"fmt"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -203,31 +204,75 @@ func CommandFunc(cmd *cobra.Command, args []string) {
 			if !cmdFlag.IsClientTLS { // TODO: not working for now
 				time.Sleep(cmdFlag.Pause)
 				fmt.Fprintf(os.Stdout, "\n")
-				fmt.Fprintln(os.Stdout, "####### GetStats")
-				if vm, err := c.GetStats(); err != nil {
+				fmt.Fprintln(os.Stdout, "####### GetStats #1")
+				vm, ne, err := c.GetStats()
+				if err != nil {
 					fmt.Fprintln(os.Stdout, "exiting with:", err)
 					return
 				} else {
-					fmt.Fprintf(os.Stdout, "%+v\n", vm)
+					fmt.Fprintf(os.Stdout, "Endpoint To Stats: %+v\n", vm)
+					fmt.Fprintf(os.Stdout, "Name To Endpoint : %+v\n", ne)
+
+					fmt.Fprintf(os.Stdout, "\n")
+					fmt.Fprintln(os.Stdout, "####### GetStats #2")
+					endpoints := []string{}
+					for _, endpoint := range ne {
+						endpoints = append(endpoints, endpoint)
+					}
+					sort.Strings(endpoints)
+					vm2, ne2, err := etcdproc.GetStats(endpoints...)
+					if err != nil {
+						fmt.Fprintln(os.Stdout, "exiting with:", err)
+						return
+					}
+					fmt.Fprintf(os.Stdout, "Endpoint To Stats: %+v\n", vm2)
+					fmt.Fprintf(os.Stdout, "Name To Endpoint : %+v\n", ne2)
 				}
 
 				time.Sleep(cmdFlag.Pause)
 				fmt.Fprintf(os.Stdout, "\n")
-				fmt.Fprintln(os.Stdout, "####### GetMetrics")
-				if vm, err := c.GetMetrics(); err != nil {
-					fmt.Fprintln(os.Stdout, "exiting with:", err)
-					return
-				} else {
-					for n, mm := range vm {
-						var fb uint64
-						if fv, ok := mm["etcd_storage_db_total_size_in_bytes"]; ok {
-							fb = uint64(fv)
+				fmt.Fprintln(os.Stdout, "####### GetMetrics #1")
+				{
+					vm, ne, err := c.GetMetrics()
+					if err != nil {
+						fmt.Fprintln(os.Stdout, "exiting with:", err)
+						return
+					} else {
+						for n, mm := range vm {
+							var fb uint64
+							if fv, ok := mm["etcd_storage_db_total_size_in_bytes"]; ok {
+								fb = uint64(fv)
+							}
+							fmt.Fprintf(os.Stdout, "%s: etcd_storage_keys_total             = %f\n", n, mm["etcd_storage_keys_total"])
+							fmt.Fprintf(os.Stdout, "%s: etcd_storage_db_total_size_in_bytes = %s\n", n, humanize.Bytes(fb))
 						}
-						fmt.Fprintf(os.Stdout, "%s: etcd_storage_keys_total             = %f\n", n, mm["etcd_storage_keys_total"])
-						fmt.Fprintf(os.Stdout, "%s: etcd_storage_db_total_size_in_bytes = %s\n", n, humanize.Bytes(fb))
+						fmt.Fprintf(os.Stdout, "Name To Endpoint: %+v\n", ne)
+
 						fmt.Fprintf(os.Stdout, "\n")
+						fmt.Fprintln(os.Stdout, "####### GetMetrics #2")
+						endpoints := []string{}
+						for _, endpoint := range ne {
+							endpoints = append(endpoints, endpoint)
+						}
+						sort.Strings(endpoints)
+						vm2, ne2, err := etcdproc.GetMetrics(endpoints...)
+						if err != nil {
+							fmt.Fprintln(os.Stdout, "exiting with:", err)
+							return
+						}
+						for n, mm := range vm2 {
+							var fb uint64
+							if fv, ok := mm["etcd_storage_db_total_size_in_bytes"]; ok {
+								fb = uint64(fv)
+							}
+							fmt.Fprintf(os.Stdout, "%s: etcd_storage_keys_total             = %f\n", n, mm["etcd_storage_keys_total"])
+							fmt.Fprintf(os.Stdout, "%s: etcd_storage_db_total_size_in_bytes = %s\n", n, humanize.Bytes(fb))
+						}
+						fmt.Fprintf(os.Stdout, "Name To Endpoint : %+v\n", ne2)
 					}
 				}
+
+				fmt.Println()
 			}
 		}()
 	}

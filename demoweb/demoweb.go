@@ -60,8 +60,6 @@ var (
 	globalCache             cache
 	portStart               int32 = 11
 	startClusterMinInterval       = 15 * time.Minute
-
-	nameToPut = "etcd2"
 )
 
 func init() {
@@ -160,7 +158,7 @@ func CommandFunc(cmd *cobra.Command, args []string) {
 
 	fmt.Fprintln(os.Stdout, "Serving http://localhost"+webPort)
 	if err := http.ListenAndServe(webPort, mainRouter); err != nil {
-		fmt.Fprintln(os.Stdout, "[runDemoWeb - error]", err)
+		fmt.Fprintln(os.Stdout, "[runetcd demo-web error]", err)
 		os.Exit(0)
 	}
 }

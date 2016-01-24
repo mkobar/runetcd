@@ -29,6 +29,9 @@ func wsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) er
 		return err
 	}
 	defer c.Close()
+
+	// this detects as in:
+	// w.(http.CloseNotifier).CloseNotify()
 	for {
 		mt, message, err := c.ReadMessage()
 		if err != nil {
@@ -248,48 +251,75 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 
 		globalCache.mu.Lock()
 		cs := globalCache.perUserID[userID].cluster
-		nameToStats, err := cs.GetStats()
+		endpointToStats, nameToEndpoint, err := cs.GetStats()
 		globalCache.mu.Unlock()
+
 		if err != nil {
 			globalCache.perUserID[userID].bufStream <- boldHTMLMsg(fmt.Sprintf("exiting with: %v", err))
 			return err
 		}
 
 		names := []string{}
-		for n := range nameToStats {
-			names = append(names, n)
+		for k := range nameToEndpoint {
+			names = append(names, k)
 		}
 		sort.Strings(names)
 		if len(names) != 3 {
 			return fmt.Errorf("expected 3 nodes but got %d nodes", len(names))
 		}
 
-		resp := struct {
-			Etcd1Name  string
-			Etcd1ID    string
-			Etcd1State string
-
-			Etcd2Name  string
-			Etcd2ID    string
-			Etcd2State string
-
-			Etcd3Name  string
-			Etcd3ID    string
-			Etcd3State string
-		}{
-			names[0],
-			nameToStats[names[0]].ID,
-			nameToStats[names[0]].State,
-
-			names[1],
-			nameToStats[names[1]].ID,
-			nameToStats[names[1]].State,
-
-			names[2],
-			nameToStats[names[2]].ID,
-			nameToStats[names[2]].State,
+		name1, endpoint1 := names[0], nameToEndpoint[names[0]]
+		name2, endpoint2 := names[1], nameToEndpoint[names[1]]
+		name3, endpoint3 := names[2], nameToEndpoint[names[2]]
+		etcd1ID := ""
+		etcd1State := ""
+		if v, ok := endpointToStats[endpoint1]; ok {
+			etcd1ID = v.ID
+			etcd1State = v.State
 		}
+		etcd2ID := ""
+		etcd2State := ""
+		if v, ok := endpointToStats[endpoint2]; ok {
+			etcd2ID = v.ID
+			etcd2State = v.State
+		}
+		etcd3ID := ""
+		etcd3State := ""
+		if v, ok := endpointToStats[endpoint3]; ok {
+			etcd3ID = v.ID
+			etcd3State = v.State
+		}
+		resp := struct {
+			Etcd1Endpoint string
+			Etcd1Name     string
+			Etcd1ID       string
+			Etcd1State    string
 
+			Etcd2Endpoint string
+			Etcd2Name     string
+			Etcd2ID       string
+			Etcd2State    string
+
+			Etcd3Endpoint string
+			Etcd3Name     string
+			Etcd3ID       string
+			Etcd3State    string
+		}{
+			endpoint1,
+			name1,
+			etcd1ID,
+			etcd1State,
+
+			endpoint2,
+			name2,
+			etcd2ID,
+			etcd2State,
+
+			endpoint3,
+			name3,
+			etcd3ID,
+			etcd3State,
+		}
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
 			return err
 		}
@@ -352,7 +382,7 @@ func metricsHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 
 		globalCache.mu.Lock()
 		cs := globalCache.perUserID[userID].cluster
-		nameToMetrics, err := cs.GetMetrics()
+		endpointToMetrics, nameToEndpoint, err := cs.GetMetrics()
 		globalCache.mu.Unlock()
 
 		if err != nil {
@@ -364,14 +394,41 @@ func metricsHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 		}
 
 		names := []string{}
-		for n := range nameToMetrics {
-			names = append(names, n)
+		for k := range nameToEndpoint {
+			names = append(names, k)
 		}
 		sort.Strings(names)
 		if len(names) != 3 {
 			return fmt.Errorf("expected 3 nodes but got %d nodes", len(names))
 		}
 
+		name1, endpoint1 := names[0], nameToEndpoint[names[0]]
+		name2, endpoint2 := names[1], nameToEndpoint[names[1]]
+		name3, endpoint3 := names[2], nameToEndpoint[names[2]]
+		etcd1StorageKeysTotal := 0.0
+		etcd1StorageBytes := 0.0
+		etcd1StorageBytesStr := "0 bytes"
+		if vm, ok := endpointToMetrics[endpoint1]; ok {
+			etcd1StorageKeysTotal = vm["etcd_storage_keys_total"]
+			etcd1StorageBytes = vm["etcd_storage_db_total_size_in_bytes"]
+			etcd1StorageBytesStr = humanize.Bytes(uint64(vm["etcd_storage_db_total_size_in_bytes"]))
+		}
+		etcd2StorageKeysTotal := 0.0
+		etcd2StorageBytes := 0.0
+		etcd2StorageBytesStr := "0 bytes"
+		if vm, ok := endpointToMetrics[endpoint2]; ok {
+			etcd2StorageKeysTotal = vm["etcd_storage_keys_total"]
+			etcd2StorageBytes = vm["etcd_storage_db_total_size_in_bytes"]
+			etcd2StorageBytesStr = humanize.Bytes(uint64(vm["etcd_storage_db_total_size_in_bytes"]))
+		}
+		etcd3StorageKeysTotal := 0.0
+		etcd3StorageBytes := 0.0
+		etcd3StorageBytesStr := "0 bytes"
+		if vm, ok := endpointToMetrics[endpoint3]; ok {
+			etcd3StorageKeysTotal = vm["etcd_storage_keys_total"]
+			etcd3StorageBytes = vm["etcd_storage_db_total_size_in_bytes"]
+			etcd3StorageBytesStr = humanize.Bytes(uint64(vm["etcd_storage_db_total_size_in_bytes"]))
+		}
 		resp := struct {
 			Etcd1Name             string
 			Etcd1StorageKeysTotal float64
@@ -388,20 +445,20 @@ func metricsHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 			Etcd3StorageBytes     float64
 			Etcd3StorageBytesStr  string
 		}{
-			names[0],
-			nameToMetrics[names[0]]["etcd_storage_keys_total"],
-			nameToMetrics[names[0]]["etcd_storage_db_total_size_in_bytes"],
-			humanize.Bytes(uint64(nameToMetrics[names[0]]["etcd_storage_db_total_size_in_bytes"])),
+			name1,
+			etcd1StorageKeysTotal,
+			etcd1StorageBytes,
+			etcd1StorageBytesStr,
 
-			names[1],
-			nameToMetrics[names[1]]["etcd_storage_keys_total"],
-			nameToMetrics[names[1]]["etcd_storage_db_total_size_in_bytes"],
-			humanize.Bytes(uint64(nameToMetrics[names[1]]["etcd_storage_db_total_size_in_bytes"])),
+			name2,
+			etcd2StorageKeysTotal,
+			etcd2StorageBytes,
+			etcd2StorageBytesStr,
 
-			names[2],
-			nameToMetrics[names[2]]["etcd_storage_keys_total"],
-			nameToMetrics[names[2]]["etcd_storage_db_total_size_in_bytes"],
-			humanize.Bytes(uint64(nameToMetrics[names[2]]["etcd_storage_db_total_size_in_bytes"])),
+			name3,
+			etcd3StorageKeysTotal,
+			etcd3StorageBytes,
+			etcd3StorageBytesStr,
 		}
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
 			return err

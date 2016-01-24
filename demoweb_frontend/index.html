@@ -84,8 +84,9 @@
                 async: true,
                 dataType: "json",
                 success: function(dataObj) {
-                    document.getElementById('etcd1_name').innerHTML = "Name: <b>" + dataObj.Etcd1Name + "</b>";
-                    document.getElementById('etcd1_id').innerHTML = "ID: <b>" + dataObj.Etcd1ID + "</b>";
+                    document.getElementById('etcd1_Endpoint').innerHTML = "Endpoint: <b>" + dataObj.Etcd1Endpoint + "</b>";
+                    document.getElementById('etcd1_Name').innerHTML = "Name: <b>" + dataObj.Etcd1Name + "</b>";
+                    document.getElementById('etcd1_ID').innerHTML = "ID: <b>" + dataObj.Etcd1ID + "</b>";
                     if (dataObj.Etcd1State == "StateLeader") {
                         document.getElementById('etcd1_state_button').className = "btn btn-primary";
                         document.getElementById('etcd1_state').className = "fa fa-fort-awesome";
@@ -103,8 +104,9 @@
                         document.getElementById('etcd1_state').className = "fa fa-pause-circle";
                     }
 
-                    document.getElementById('etcd2_name').innerHTML = "Name: <b>" + dataObj.Etcd2Name + "</b>";
-                    document.getElementById('etcd2_id').innerHTML = "ID: <b>" + dataObj.Etcd2ID + "</b>";
+                    document.getElementById('etcd2_Endpoint').innerHTML = "Endpoint: <b>" + dataObj.Etcd2Endpoint + "</b>";
+                    document.getElementById('etcd2_Name').innerHTML = "Name: <b>" + dataObj.Etcd2Name + "</b>";
+                    document.getElementById('etcd2_ID').innerHTML = "ID: <b>" + dataObj.Etcd2ID + "</b>";
                     if (dataObj.Etcd2State == "StateLeader") {
                         document.getElementById('etcd2_state_button').className = "btn btn-primary";
                         document.getElementById('etcd2_state').className = "fa fa-fort-awesome";
@@ -122,8 +124,9 @@
                         document.getElementById('etcd2_state').className = "fa fa-pause-circle";
                     }
 
-                    document.getElementById('etcd3_name').innerHTML = "Name: <b>" + dataObj.Etcd3Name + "</b>";
-                    document.getElementById('etcd3_id').innerHTML = "ID: <b>" + dataObj.Etcd3ID + "</b>";
+                    document.getElementById('etcd3_Endpoint').innerHTML = "Endpoint: <b>" + dataObj.Etcd3Endpoint + "</b>";
+                    document.getElementById('etcd3_Name').innerHTML = "Name: <b>" + dataObj.Etcd3Name + "</b>";
+                    document.getElementById('etcd3_ID').innerHTML = "ID: <b>" + dataObj.Etcd3ID + "</b>";
                     if (dataObj.Etcd3State == "StateLeader") {
                         document.getElementById('etcd3_state_button').className = "btn btn-primary";
                         document.getElementById('etcd3_state').className = "fa fa-fort-awesome";
@@ -443,72 +446,6 @@
                 }())
             }]
         });
-
-        // var data = dataObj.Values;
-        // var range = data.length;
-        // var xCategories = []
-        // var dataSlice = []
-        // for (i = 0; i < range; i++) {
-        //     var tv = {
-        //         name: Object.keys(data[i])[0],
-        //         y: data[i][Object.keys(data[i])[0]][0],
-        //         XXX: data[i][Object.keys(data[i])[0]][1],
-        //         color: data[i][Object.keys(data[i])[0]][2]
-        //     }
-        //     xCategories.push(Object.keys(data[i])[0])
-        //     dataSlice.push(tv)
-        // }
-        // var chart_yahoo_cpc_bar_mobile = {
-        //     chart: {
-        //         plotBackgroundColor: null,
-        //         plotBorderWidth: null,
-        //         plotShadow: false
-        //     },
-        //     title: {
-        //         text: dataObj.Title
-        //     },
-        //     tooltip: {
-        //         formatter: function() {
-        //             return '<b>AAAA:</b> ' + this.key +
-        //                 '<br><b>XXX:</b> ' + this.point.options.XXX;
-        //         }
-        //     },
-        //     plotOptions: {
-        //         column: {
-        //             allowPointSelect: true,
-        //             cursor: 'pointer',
-        //             dataLabels: {
-        //                 enabled: true,
-        //                 style: {
-        //                     color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black',
-        //                     fontSize: '15px'
-        //                 },
-        //                 connectorPadding: 3,
-        //                 connectorColor: 'silver'
-        //             }
-        //         }
-        //     },
-        //     xAxis: {
-        //         categories: xCategories
-        //     },
-        //     yAxis: {
-        //         title: {
-        //             text: 'XXX'
-        //         },
-        //         labels: {
-        //             formatter: function() {
-        //                 // format bytes to megabytes
-        //                 return
-        //             }
-        //         }
-        //     },
-        //     series: [{
-        //         type: 'column',
-        //         name: 'XXX Bar',
-        //         data: dataSlice
-        //     }]
-        // }
-        // $('#graph_id__________').highcharts(Highcharts.merge(graph_id__________, ThemePie));
 
         // var eventStream = new EventSource('/stream')
         // eventStream.onopen = function(ev) {
@@ -905,7 +842,7 @@
         font-variant: normal;
     }
     </style>
-    <title>runetcd</title>
+    <title>runetcd demo-web</title>
 </head>
 
 <body>
@@ -959,8 +896,9 @@
                         <div class="card card-block">
                             <p class="card-text">
                                 <ul>
-                                    <li id="etcd1_name"><b>Name:</b> ...</li>
-                                    <li id="etcd1_id"><b>ID:</b> ...</li>
+                                    <li id="etcd1_Endpoint"><b>Endpoint:</b> ...</li>
+                                    <li id="etcd1_Name"><b>Name:</b> ...</li>
+                                    <li id="etcd1_ID"><b>ID:</b> ...</li>
                                 </ul>
                             </p>
                             <div class="wrapper">
@@ -974,8 +912,9 @@
                         <div class="card card-block">
                             <p class="card-text">
                                 <ul>
-                                    <li id="etcd2_name"><b>Name:</b> ...</li>
-                                    <li id="etcd2_id"><b>ID:</b> ...</li>
+                                    <li id="etcd2_Endpoint"><b>Endpoint:</b> ...</li>
+                                    <li id="etcd2_Name"><b>Name:</b> ...</li>
+                                    <li id="etcd2_ID"><b>ID:</b> ...</li>
                                 </ul>
                             </p>
                             <div class="wrapper">
@@ -989,8 +928,9 @@
                         <div class="card card-block">
                             <p class="card-text">
                                 <ul>
-                                    <li id="etcd3_name"><b>Name:</b> ...</li>
-                                    <li id="etcd3_id"><b>ID:</b> ...</li>
+                                    <li id="etcd3_Endpoint"><b>Endpoint:</b> ...</li>
+                                    <li id="etcd3_Name"><b>Name:</b> ...</li>
+                                    <li id="etcd3_ID"><b>ID:</b> ...</li>
                                 </ul>
                             </p>
                             <div class="wrapper">
@@ -1006,12 +946,12 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="card card-block">
-                                    <div id="chart_total_keys" style="max-width: 550px; height: 350px; margin: 0 auto"></div>
+                                    <div id="chart_total_keys" style="margin: 0 auto"></div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="card card-block">
-                                    <div id="chart_total_megabytes" style="max-width: 550px; height: 350px; margin: 0 auto"></div>
+                                    <div id="chart_total_megabytes" style="margin: 0 auto"></div>
                                 </div>
                             </div>
                         </div>

@@ -8,6 +8,7 @@
 //	  dashboard   dashboard provides etcd dashboard in a web browser.
 //	  demo        demo demos etcd in terminal.
 //	  demo-web    demo-web demos etcd in a web browser.
+//	  version     version tells runetcd version.
 //
 //	Flags:
 //	  -h, --help[=false]: help for runetcd
@@ -24,6 +25,7 @@ import (
 	"github.com/gophergala2016/runetcd/demo"
 	"github.com/gophergala2016/runetcd/demoweb"
 	"github.com/gophergala2016/runetcd/kill"
+	"github.com/gophergala2016/runetcd/version"
 	"github.com/spf13/cobra"
 )
 
@@ -44,6 +46,7 @@ func init() {
 	rootCommand.AddCommand(dashboard.Command)
 	rootCommand.AddCommand(demo.Command)
 	rootCommand.AddCommand(demoweb.Command)
+	rootCommand.AddCommand(version.Command)
 }
 
 func main() {
