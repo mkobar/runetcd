@@ -85,7 +85,7 @@ You can use this as an `etcd` dashboard:
 
 Add help page!
 
-![changelogs_04](./changelogs/changelogs_04.png)
+![help_page](./changelogs/help_page.png)
 
 and break time...
 
