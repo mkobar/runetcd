@@ -418,6 +418,38 @@ func metricsHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 	user := ctx.Value(userKey).(*string)
 	userID := *user
 
+	emptyResp := struct {
+		Etcd1Name             string
+		Etcd1StorageKeysTotal float64
+		Etcd1StorageBytes     float64
+		Etcd1StorageBytesStr  string
+
+		Etcd2Name             string
+		Etcd2StorageKeysTotal float64
+		Etcd2StorageBytes     float64
+		Etcd2StorageBytesStr  string
+
+		Etcd3Name             string
+		Etcd3StorageKeysTotal float64
+		Etcd3StorageBytes     float64
+		Etcd3StorageBytesStr  string
+	}{
+		"etcd1",
+		0.0,
+		0.0,
+		"",
+
+		"etcd2",
+		0.0,
+		0.0,
+		"",
+
+		"etcd3",
+		0.0,
+		0.0,
+		"",
+	}
+
 	switch req.Method {
 	case "GET":
 		toRun := false
@@ -426,7 +458,9 @@ func metricsHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 		globalCache.mu.Unlock()
 
 		if !toRun {
-			globalCache.perUserID[userID].bufStream <- boldHTMLMsg("Cluster is not ready to provide metrics!!!")
+			if err := json.NewEncoder(w).Encode(emptyResp); err != nil {
+				return err
+			}
 			return nil
 		}
 
@@ -436,6 +470,9 @@ func metricsHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 		globalCache.mu.Unlock()
 		if err != nil {
 			globalCache.perUserID[userID].bufStream <- boldHTMLMsg(fmt.Sprintf("exiting with: %v", err))
+			if errJ := json.NewEncoder(w).Encode(emptyResp); errJ != nil {
+				return errJ
+			}
 			return err
 		}
 

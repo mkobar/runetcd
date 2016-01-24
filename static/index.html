@@ -77,8 +77,6 @@
             });
         }
 
-        var y = 0;
-
         var receiveStats = function() {
             $.ajax({
                 type: "GET",
@@ -86,9 +84,6 @@
                 async: true,
                 dataType: "json",
                 success: function(dataObj) {
-                    console.log(y, dataObj);
-                    y = y + 1;
-
                     document.getElementById('etcd1_name').innerHTML = "Name: <b>" + dataObj.Etcd1Name + "</b>";
                     document.getElementById('etcd1_id').innerHTML = "ID: <b>" + dataObj.Etcd1ID + "</b>";
                     if (dataObj.Etcd1State == "StateLeader") {
@@ -149,21 +144,6 @@
             });
         }
 
-        var z = 0;
-
-        var receiveMetrics = function() {
-            $.ajax({
-                type: "GET",
-                url: '/metrics',
-                async: true,
-                dataType: "json",
-                success: function(dataObj) {
-                    console.log(z, dataObj);
-                    z = z + 1;
-                }
-            });
-        }
-
         Highcharts.setOptions({
             global: {
                 useUTC: false
@@ -177,19 +157,40 @@
                 marginRight: 10,
                 events: {
                     load: function() {
-
-                        // set up the updating of the chart each second
-                        var series = this.series[0];
+                        var series1 = this.series[0];
+                        var series2 = this.series[1];
+                        var series3 = this.series[2];
                         setInterval(function() {
-                            var x = (new Date()).getTime(), // current time
-                                y = Math.random();
-                            series.addPoint([x, y], true, true);
-                        }, 1000);
+                            $.ajax({
+                                type: "GET",
+                                url: '/metrics',
+                                async: true,
+                                dataType: "json",
+                                success: function(dataObj) {
+                                    var x = (new Date()).getTime();
+                                    series1.addPoint({
+                                        x: x,
+                                        y: dataObj.Etcd1StorageKeysTotal
+                                            // color: 
+                                    }, true, true);
+                                    series2.addPoint({
+                                        x: x,
+                                        y: dataObj.Etcd2StorageKeysTotal
+                                            // color: 
+                                    }, true, true);
+                                    series3.addPoint({
+                                        x: x,
+                                        y: dataObj.Etcd3StorageKeysTotal
+                                            // color: 
+                                    }, true, true);
+                                }
+                            });
+                        }, 5000);
                     }
                 }
             },
             title: {
-                text: 'Live random data'
+                text: 'Number of keys'
             },
             xAxis: {
                 type: 'datetime',
@@ -197,7 +198,7 @@
             },
             yAxis: {
                 title: {
-                    text: 'Value'
+                    text: 'Count'
                 },
                 plotLines: [{
                     value: 0,
@@ -219,17 +220,111 @@
                 enabled: false
             },
             series: [{
-                name: 'Random data',
+                name: 'etcd1',
                 data: (function() {
-                    // generate an array of random data
                     var data = [],
-                        var time = (new Date()).getTime(),
-                            i;
-
+                        time = (new Date()).getTime(),
+                        i;
                     for (i = -19; i <= 0; i += 1) {
                         data.push({
-                            x: time + i * 1000,
-                            y: Math.random()
+                            x: time + i * 5000,
+                            y: 0
+                        });
+                    }
+                    return data;
+                }())
+            }, {
+                name: 'etcd2',
+                data: (function() {
+                    var data = [],
+                        time = (new Date()).getTime(),
+                        i;
+                    for (i = -19; i <= 0; i += 1) {
+                        data.push({
+                            x: time + i * 5000,
+                            y: 0
+                        });
+                    }
+                    return data;
+                }())
+            }, {
+                name: 'etcd3',
+                data: (function() {
+                    var data = [],
+                        time = (new Date()).getTime(),
+                        i;
+                    for (i = -19; i <= 0; i += 1) {
+                        data.push({
+                            x: time + i * 5000,
+                            y: 0
+                        });
+                    }
+                    return data;
+                }())
+            }]
+        });
+
+        $('#chart_total_megabytes').highcharts({
+            chart: {
+                type: 'spline',
+                animation: Highcharts.svg, // don't animate in old IE
+                marginRight: 10,
+                events: {
+                    load: function() {
+                        // set up the updating of the chart each second
+                        var series = this.series[0];
+                        setInterval(function() {
+                            var y = Math.random();
+                            series.addPoint({
+                                x: (new Date()).getTime(),
+                                y: y,
+                                color: '#FF00FF'
+                            }, true, true);
+                        }, 5000);
+                    }
+                }
+            },
+            title: {
+                text: 'Storage size'
+            },
+            xAxis: {
+                type: 'datetime',
+                tickPixelInterval: 150
+            },
+            yAxis: {
+                title: {
+                    text: 'MB'
+                },
+                plotLines: [{
+                    value: 0,
+                    width: 1,
+                    color: '#808080'
+                }]
+            },
+            tooltip: {
+                formatter: function() {
+                    return '<b>' + this.series.name + '</b><br/>' +
+                        Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+                        Highcharts.numberFormat(this.y, 2);
+                }
+            },
+            legend: {
+                enabled: false
+            },
+            exporting: {
+                enabled: false
+            },
+            series: [{
+                name: 'Storage Size',
+                data: (function() {
+                    // initialize the graph frame
+                    var data = [],
+                        time = (new Date()).getTime(),
+                        i;
+                    for (i = -19; i <= 0; i += 1) {
+                        data.push({
+                            x: time + i * 5000,
+                            y: 0
                         });
                     }
                     return data;
@@ -366,9 +461,6 @@
             runWithTimeout(receiveStats, 100, 1);
             runWithTimeout(receiveStats, 2000, 3);
             runWithTimeout(receiveStats, 10000, 1000);
-        });
-        $('#start_cluster').click(function(e) {
-            runWithTimeout(receiveMetrics, 10000, 1000);
         });
 
         $('#start_stress').click(function(e) {
@@ -800,14 +892,12 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="card card-block">
-                                    <h3 class="card-title" align="center">Total Keys</h3>
-                                    <div id="chart_total_keys" style="max-width: 370px; height: 350px; margin: 0 auto"></div>
+                                    <div id="chart_total_keys" style="max-width: 550px; height: 350px; margin: 0 auto"></div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="card card-block">
-                                    <h3 class="card-title" align="center">Total Storage (MB)</h3>
-                                    <div id="chart_total_megabytes" style="max-width: 370px; height: 350px; margin: 0 auto"></div>
+                                    <div id="chart_total_megabytes" style="max-width: 550px; height: 350px; margin: 0 auto"></div>
                                 </div>
                             </div>
                         </div>
