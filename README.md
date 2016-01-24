@@ -79,18 +79,18 @@ You can use this as an `etcd` dashboard:
 ## Progress
 
 <br>
-##### 5:30PM Saturday, January 23, 2016
+##### 5:30PM Saturday, January 23rd, 2016
 
 Got some realtime updates, logs up and running!
 
-![changelog_01](./demos/changelog_01.png)
+![changelog_01](./changelogs/changelogs_01.png)
 
 <br>
-##### 3AM Saturday, January 23, 2016
+##### 3AM Saturday, January 23rd, 2016
 
 CLI demo done.
 
-![changelog_00](./demos/changelog_00.png)
+![changelog_00](./changelogs/changelogs_00.png)
 
 [↑ top](#runetcd--)
 <br><br>

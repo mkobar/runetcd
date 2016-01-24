@@ -155,20 +155,54 @@
                 async: true,
                 dataType: "json",
                 success: function(dataObj) {
+                    console.log(dataObj);
                     document.getElementById('etcd1_name').innerHTML = "Name: <b>" + dataObj.Etcd1Name + "</b>";
                     document.getElementById('etcd1_id').innerHTML = "ID: <b>" + dataObj.Etcd1ID + "</b>";
-                    document.getElementById('etcd1_state_button').className = "btn btn-primary";
-                    document.getElementById('etcd1_state').className = "fa fa-heartbeat";
+                    if (dataObj.Etcd1State == "StateLeader") {
+                        document.getElementById('etcd1_state_button').className = "btn btn-primary";
+                        document.getElementById('etcd1_state').className = "fa fa-fort-awesome";
+                    } else if (dataObj.Etcd1State == "StateCandidate") {
+                        document.getElementById('etcd1_state_button').className = "btn btn-info";
+                        document.getElementById('etcd1_state').className = "fa fa-star-half-o";
+                    } else if (dataObj.Etcd1State == "StateFollower") {
+                        document.getElementById('etcd1_state_button').className = "btn btn-warning";
+                        document.getElementById('etcd1_state').className = "fa fa-star-o";
+                    } else {
+                        document.getElementById('etcd1_state_button').className = "btn btn-secondary-outline";
+                        document.getElementById('etcd1_state').className = "fa fa-pause-circle";
+                    }
 
                     document.getElementById('etcd2_name').innerHTML = "Name: <b>" + dataObj.Etcd2Name + "</b>";
                     document.getElementById('etcd2_id').innerHTML = "ID: <b>" + dataObj.Etcd2ID + "</b>";
-                    document.getElementById('etcd2_state_button').className = "btn btn-primary";
-                    document.getElementById('etcd2_state').className = "fa fa-heartbeat";
+                    if (dataObj.Etcd2State == "StateLeader") {
+                        document.getElementById('etcd2_state_button').className = "btn btn-primary";
+                        document.getElementById('etcd2_state').className = "fa fa-fort-awesome";
+                    } else if (dataObj.Etcd2State == "StateCandidate") {
+                        document.getElementById('etcd2_state_button').className = "btn btn-info";
+                        document.getElementById('etcd2_state').className = "fa fa-star-half-o";
+                    } else if (dataObj.Etcd2State == "StateFollower") {
+                        document.getElementById('etcd2_state_button').className = "btn btn-warning";
+                        document.getElementById('etcd2_state').className = "fa fa-star-o";
+                    } else {
+                        document.getElementById('etcd2_state_button').className = "btn btn-secondary-outline";
+                        document.getElementById('etcd2_state').className = "fa fa-pause-circle";
+                    }
 
                     document.getElementById('etcd3_name').innerHTML = "Name: <b>" + dataObj.Etcd3Name + "</b>";
                     document.getElementById('etcd3_id').innerHTML = "ID: <b>" + dataObj.Etcd3ID + "</b>";
-                    document.getElementById('etcd3_state_button').className = "btn btn-primary";
-                    document.getElementById('etcd3_state').className = "fa fa-heartbeat";
+                    if (dataObj.Etcd3State == "StateLeader") {
+                        document.getElementById('etcd3_state_button').className = "btn btn-primary";
+                        document.getElementById('etcd3_state').className = "fa fa-fort-awesome";
+                    } else if (dataObj.Etcd3State == "StateCandidate") {
+                        document.getElementById('etcd3_state_button').className = "btn btn-info";
+                        document.getElementById('etcd3_state').className = "fa fa-star-half-o";
+                    } else if (dataObj.Etcd3State == "StateFollower") {
+                        document.getElementById('etcd3_state_button').className = "btn btn-warning";
+                        document.getElementById('etcd3_state').className = "fa fa-star-o";
+                    } else {
+                        document.getElementById('etcd3_state_button').className = "btn btn-secondary-outline";
+                        document.getElementById('etcd3_state').className = "fa fa-pause-circle";
+                    }
                 }
             });
         }
