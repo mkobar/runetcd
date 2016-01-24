@@ -85,7 +85,7 @@ You can use this as an `etcd` dashboard:
 
 Add help page!
 
-![help_page](./changelogs/help_page.png)
+![runetcd_help_page_00](./changelogs/runetcd_help_page_00.png)
 
 and break time...
 
