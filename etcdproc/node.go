@@ -12,13 +12,6 @@ import (
 	"github.com/fatih/color"
 )
 
-type OutputOption int
-
-const (
-	ToTerminal OutputOption = iota
-	ToHTML
-)
-
 // Node represents an etcd node process.
 type Node struct {
 	// inherited from Group
@@ -37,6 +30,13 @@ type Node struct {
 	Terminated bool
 	cmd        *exec.Cmd
 }
+
+type OutputOption int
+
+const (
+	ToTerminal OutputOption = iota
+	ToHTML
+)
 
 var (
 	colors = []color.Attribute{

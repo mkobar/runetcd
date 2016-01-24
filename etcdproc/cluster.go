@@ -12,7 +12,7 @@ import (
 	"syscall"
 )
 
-// Cluster groups a set of process Nodes.
+// Cluster groups a set of Node processes.
 type Cluster struct {
 	// define in pointer type to not copy over cluster
 	mu                *sync.Mutex // guards the following
@@ -24,7 +24,6 @@ type Cluster struct {
 // CreateCluster creates a Cluster by parsing the input io.Reader.
 // io.Writer and buufferStream channel are shared across cluster.
 func CreateCluster(w io.Writer, bufStream chan string, outputOption OutputOption, command string, fs ...*Flags) (*Cluster, error) {
-
 	if len(fs) == 0 {
 		return nil, nil
 	}

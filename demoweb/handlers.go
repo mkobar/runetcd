@@ -1,4 +1,4 @@
-package main
+package demoweb
 
 import (
 	"encoding/json"
@@ -7,47 +7,13 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/gophergala2016/runetcd/etcdproc"
-	"github.com/gorilla/websocket"
 	"github.com/satori/go.uuid"
-	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-)
-
-type (
-	key int
-
-	cache struct {
-		mu        sync.Mutex
-		perUserID map[string]*userData
-	}
-	userData struct {
-		upgrader       *websocket.Upgrader
-		clusterStarted time.Time
-
-		cluster   *etcdproc.Cluster
-		donec     chan struct{}
-		bufStream chan string
-
-		ctlCmd     string
-		ctlHistory []string // TODO: do not store all commands (do it in FIFO)
-	}
-)
-
-const (
-	demoWebPort     = ":8000"
-	userKey     key = 0
-)
-
-var (
-	globalCache             cache
-	portStart               int32 = 11
-	startClusterMinInterval       = 15 * time.Minute
 )
 
 func wsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
@@ -136,80 +102,6 @@ func streamHandler(ctx context.Context, w http.ResponseWriter, req *http.Request
 	return nil
 }
 
-func demoWebCommandFunc(cmd *cobra.Command, args []string) {
-	rootContext, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	mainRouter := http.NewServeMux()
-	mainRouter.Handle("/", http.FileServer(http.Dir("./static")))
-
-	mainRouter.Handle("/ws", &ContextAdapter{
-		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(wsHandler)),
-	})
-	mainRouter.Handle("/stream", &ContextAdapter{
-		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(streamHandler)),
-	})
-
-	mainRouter.Handle("/start_cluster", &ContextAdapter{
-		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(startClusterHandler)),
-	})
-	mainRouter.Handle("/start_stress", &ContextAdapter{
-		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(startStressHandler)),
-	})
-	mainRouter.Handle("/stats", &ContextAdapter{
-		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(statsHandler)),
-	})
-	mainRouter.Handle("/metrics", &ContextAdapter{
-		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(metricsHandler)),
-	})
-
-	mainRouter.Handle("/list_ctl", &ContextAdapter{
-		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(listCtlHandler)),
-	})
-	mainRouter.Handle("/ctl", &ContextAdapter{
-		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(ctlHandler)),
-	})
-
-	mainRouter.Handle("/kill_1", &ContextAdapter{
-		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(killHandler)),
-	})
-	mainRouter.Handle("/kill_2", &ContextAdapter{
-		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(killHandler)),
-	})
-	mainRouter.Handle("/kill_3", &ContextAdapter{
-		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(killHandler)),
-	})
-	mainRouter.Handle("/restart_1", &ContextAdapter{
-		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(restartHandler)),
-	})
-	mainRouter.Handle("/restart_2", &ContextAdapter{
-		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(restartHandler)),
-	})
-	mainRouter.Handle("/restart_3", &ContextAdapter{
-		ctx:     rootContext,
-		handler: withUserCache(ContextHandlerFunc(restartHandler)),
-	})
-
-	fmt.Fprintln(os.Stdout, "Serving http://localhost"+demoWebPort)
-	if err := http.ListenAndServe(demoWebPort, mainRouter); err != nil {
-		fmt.Fprintln(os.Stdout, "[runDemoWeb - error]", err)
-		os.Exit(0)
-	}
-}
-
 func startClusterHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 	user := ctx.Value(userKey).(*string)
 	userID := *user
@@ -255,7 +147,7 @@ func spawnCluster(userID string) {
 	}()
 
 	portPrefix := atomic.LoadInt32(&portStart)
-	fs := make([]*etcdproc.Flags, globalFlag.ClusterSize)
+	fs := make([]*etcdproc.Flags, 3)
 	for i := range fs {
 		df, err := etcdproc.NewFlags(fmt.Sprintf("etcd%d", i+1), globalPorts, int(portPrefix)+i, "etcd-cluster-token", "new", uuid.NewV4().String(), false, false, "", "", "")
 		if err != nil {
@@ -266,7 +158,7 @@ func spawnCluster(userID string) {
 	}
 	atomic.AddInt32(&portStart, 7)
 
-	cs, err := etcdproc.CreateCluster(os.Stdout, globalCache.perUserID[userID].bufStream, etcdproc.ToHTML, globalFlag.EtcdBinary, fs...)
+	cs, err := etcdproc.CreateCluster(os.Stdout, globalCache.perUserID[userID].bufStream, etcdproc.ToHTML, cmdFlag.EtcdBinary, fs...)
 	if err != nil {
 		globalCache.perUserID[userID].bufStream <- fmt.Sprintf("[cluster - error] %+v", err)
 		return
@@ -300,7 +192,7 @@ func spawnCluster(userID string) {
 		globalCache.perUserID[userID].bufStream <- boldHTMLMsg("Cluster done!")
 	case <-globalCache.perUserID[userID].donec:
 		globalCache.perUserID[userID].bufStream <- boldHTMLMsg("Cluster done!")
-	case <-time.After(globalFlag.Timeout):
+	case <-time.After(cmdFlag.Timeout):
 		globalCache.perUserID[userID].bufStream <- boldHTMLMsg("Cluster time out!")
 	}
 }
@@ -664,19 +556,4 @@ func restartHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 	}
 
 	return nil
-}
-
-func urlToName(s string) string {
-	ss := strings.Split(s, "_")
-	suffix := ss[len(ss)-1]
-	switch suffix {
-	case "1":
-		return "etcd1"
-	case "2":
-		return "etcd2"
-	case "3":
-		return "etcd3"
-	default:
-		return "unknown"
-	}
 }

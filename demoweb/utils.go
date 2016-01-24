@@ -1,31 +1,11 @@
-package main
+package demoweb
 
 import (
 	"crypto/sha512"
 	"encoding/base64"
 	"net/http"
-	"os"
 	"strings"
 )
-
-func openToRead(fpath string) (*os.File, error) {
-	f, err := os.OpenFile(fpath, os.O_RDONLY, 0444)
-	if err != nil {
-		return f, err
-	}
-	return f, nil
-}
-
-func openToOverwrite(fpath string) (*os.File, error) {
-	f, err := os.OpenFile(fpath, os.O_RDWR|os.O_TRUNC, 0777)
-	if err != nil {
-		f, err = os.Create(fpath)
-		if err != nil {
-			return f, err
-		}
-	}
-	return f, nil
-}
 
 func getRealIP(req *http.Request) string {
 	ts := []string{"X-Forwarded-For", "x-forwarded-for", "X-FORWARDED-FOR"}
@@ -48,6 +28,21 @@ func getUserID(req *http.Request) string {
 		ip = strings.Split(req.RemoteAddr, ":")[0]
 	}
 	return ip + "_" + hashSha512(req.UserAgent())[:5]
+}
+
+func urlToName(s string) string {
+	ss := strings.Split(s, "_")
+	suffix := ss[len(ss)-1]
+	switch suffix {
+	case "1":
+		return "etcd1"
+	case "2":
+		return "etcd2"
+	case "3":
+		return "etcd3"
+	default:
+		return "unknown"
+	}
 }
 
 func boldHTMLMsg(msg string) string {

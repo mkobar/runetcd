@@ -1,4 +1,4 @@
-package main
+package demoweb
 
 import (
 	"net/http"

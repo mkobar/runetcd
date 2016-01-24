@@ -1,9 +1,3 @@
-DISCLAIMER: I dumped a lot of code without much documentation and optimization.
-It needs to be cleaned up and better organized. Further work will be continued at
-https://github.com/gyuho/runetcd.
-
-<br>
-
 ## runetcd [![Build Status](https://img.shields.io/travis/gophergala2016/runetcd.svg?style=flat-square)](https://travis-ci.org/gophergala2016/runetcd) [![Godoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://godoc.org/github.com/gophergala2016/runetcd)
 
 runetcd runs, demos [`etcd`](https://github.com/coreos/etcd) with CLIs and dashboards.

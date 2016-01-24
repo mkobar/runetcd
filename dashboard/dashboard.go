@@ -1,21 +1,19 @@
 package dashboard
 
-import (
-	"fmt"
-	"os"
+import "github.com/spf13/cobra"
 
-	"github.com/spf13/cobra"
+const (
+	webPort = ":8080"
 )
 
 var (
-	Command = &cobra.Command{}
+	Command = &cobra.Command{
+		Use:   "dashboard",
+		Short: "dashboard provides etcd dashboard in a web browser.",
+		Run:   CommandFunc,
+	}
 )
 
 func CommandFunc(cmd *cobra.Command, args []string) {
-	etcdBinary, err := cmd.Flags().GetString("etcd-binary")
-	if err != nil {
-		fmt.Fprintln(os.Stdout, err)
-		os.Exit(1)
-	}
-	_ = etcdBinary
+
 }
