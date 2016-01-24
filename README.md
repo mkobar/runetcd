@@ -95,6 +95,21 @@ go get -v -u golang.org/x/net/context
 ## Progress
 
 <br><br><br>
+##### Sun January 24 2016 14:20 PM
+
+Almost done. Dashboard, demo-web both working good.
+
+![changelogs_09](./changelogs/changelogs_09.jpg)
+
+<br><br><br>
+##### Sun January 24 2016 12:58 PM
+
+Finish dashboard backend.
+
+![changelogs_08](./changelogs/changelogs_08.png)
+![changelogs_07](./changelogs/changelogs_07.png)
+
+<br><br><br>
 ##### Sun January 24 2016 10:31 AM
 
 Outlined dashboard frontend.

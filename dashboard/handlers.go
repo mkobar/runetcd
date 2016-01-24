@@ -109,84 +109,205 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 		name5, endpoint5 := names[4], nameToEndpoint[names[4]]
 		etcd1ID := ""
 		etcd1State := ""
+		etcd1StartTime := ""
+		etcd1LeaderUptime := ""
+		etcd1RecvAppendRequestCnt := ""
+		etcd1RecvingBandwidthRate := ""
+		etcd1SendAppendRequestCnt := ""
+		etcd1SendingBandwidthRate := ""
 		if v, ok := endpointToStats[endpoint1]; ok {
 			etcd1ID = v.ID
 			etcd1State = v.State
+			etcd1StartTime = v.StartTime.String()[:19]
+			etcd1LeaderUptime = v.LeaderInfo.Uptime
+			etcd1RecvAppendRequestCnt = fmt.Sprintf("%d", v.RecvAppendRequestCnt)
+			etcd1RecvingBandwidthRate = fmt.Sprintf("%f", v.RecvingBandwidthRate)
+			etcd1SendAppendRequestCnt = fmt.Sprintf("%d", v.SendAppendRequestCnt)
+			etcd1SendingBandwidthRate = fmt.Sprintf("%f", v.SendingBandwidthRate)
 		}
 		etcd2ID := ""
 		etcd2State := ""
+		etcd2StartTime := ""
+		etcd2LeaderUptime := ""
+		etcd2RecvAppendRequestCnt := ""
+		etcd2RecvingBandwidthRate := ""
+		etcd2SendAppendRequestCnt := ""
+		etcd2SendingBandwidthRate := ""
 		if v, ok := endpointToStats[endpoint2]; ok {
 			etcd2ID = v.ID
 			etcd2State = v.State
+			etcd2StartTime = v.StartTime.String()[:19]
+			etcd2LeaderUptime = v.LeaderInfo.Uptime
+			etcd2RecvAppendRequestCnt = fmt.Sprintf("%d", v.RecvAppendRequestCnt)
+			etcd2RecvingBandwidthRate = fmt.Sprintf("%f", v.RecvingBandwidthRate)
+			etcd2SendAppendRequestCnt = fmt.Sprintf("%d", v.SendAppendRequestCnt)
+			etcd2SendingBandwidthRate = fmt.Sprintf("%f", v.SendingBandwidthRate)
 		}
 		etcd3ID := ""
 		etcd3State := ""
+		etcd3StartTime := ""
+		etcd3LeaderUptime := ""
+		etcd3RecvAppendRequestCnt := ""
+		etcd3RecvingBandwidthRate := ""
+		etcd3SendAppendRequestCnt := ""
+		etcd3SendingBandwidthRate := ""
 		if v, ok := endpointToStats[endpoint3]; ok {
 			etcd3ID = v.ID
 			etcd3State = v.State
+			etcd3StartTime = v.StartTime.String()[:19]
+			etcd3LeaderUptime = v.LeaderInfo.Uptime
+			etcd3RecvAppendRequestCnt = fmt.Sprintf("%d", v.RecvAppendRequestCnt)
+			etcd3RecvingBandwidthRate = fmt.Sprintf("%f", v.RecvingBandwidthRate)
+			etcd3SendAppendRequestCnt = fmt.Sprintf("%d", v.SendAppendRequestCnt)
+			etcd3SendingBandwidthRate = fmt.Sprintf("%f", v.SendingBandwidthRate)
+
 		}
 		etcd4ID := ""
 		etcd4State := ""
+		etcd4StartTime := ""
+		etcd4LeaderUptime := ""
+		etcd4RecvAppendRequestCnt := ""
+		etcd4RecvingBandwidthRate := ""
+		etcd4SendAppendRequestCnt := ""
+		etcd4SendingBandwidthRate := ""
 		if v, ok := endpointToStats[endpoint4]; ok {
 			etcd4ID = v.ID
 			etcd4State = v.State
+			etcd4StartTime = v.StartTime.String()[:19]
+			etcd4LeaderUptime = v.LeaderInfo.Uptime
+			etcd4RecvAppendRequestCnt = fmt.Sprintf("%d", v.RecvAppendRequestCnt)
+			etcd4RecvingBandwidthRate = fmt.Sprintf("%f", v.RecvingBandwidthRate)
+			etcd4SendAppendRequestCnt = fmt.Sprintf("%d", v.SendAppendRequestCnt)
+			etcd4SendingBandwidthRate = fmt.Sprintf("%f", v.SendingBandwidthRate)
 		}
 		etcd5ID := ""
 		etcd5State := ""
+		etcd5StartTime := ""
+		etcd5LeaderUptime := ""
+		etcd5RecvAppendRequestCnt := ""
+		etcd5RecvingBandwidthRate := ""
+		etcd5SendAppendRequestCnt := ""
+		etcd5SendingBandwidthRate := ""
 		if v, ok := endpointToStats[endpoint5]; ok {
 			etcd5ID = v.ID
 			etcd5State = v.State
+			etcd5StartTime = v.StartTime.String()[:19]
+			etcd5LeaderUptime = v.LeaderInfo.Uptime
+			etcd5RecvAppendRequestCnt = fmt.Sprintf("%d", v.RecvAppendRequestCnt)
+			etcd5RecvingBandwidthRate = fmt.Sprintf("%f", v.RecvingBandwidthRate)
+			etcd5SendAppendRequestCnt = fmt.Sprintf("%d", v.SendAppendRequestCnt)
+			etcd5SendingBandwidthRate = fmt.Sprintf("%f", v.SendingBandwidthRate)
 		}
 		resp := struct {
-			Etcd1Endpoint string
-			Etcd1Name     string
-			Etcd1ID       string
-			Etcd1State    string
+			Etcd1Name                 string
+			Etcd1Endpoint             string
+			Etcd1ID                   string
+			Etcd1State                string
+			Etcd1StartTime            string
+			Etcd1LeaderUptime         string
+			Etcd1RecvAppendRequestCnt string
+			Etcd1RecvingBandwidthRate string
+			Etcd1SendAppendRequestCnt string
+			Etcd1SendingBandwidthRate string
 
-			Etcd2Endpoint string
-			Etcd2Name     string
-			Etcd2ID       string
-			Etcd2State    string
+			Etcd2Name                 string
+			Etcd2Endpoint             string
+			Etcd2ID                   string
+			Etcd2State                string
+			Etcd2StartTime            string
+			Etcd2LeaderUptime         string
+			Etcd2RecvAppendRequestCnt string
+			Etcd2RecvingBandwidthRate string
+			Etcd2SendAppendRequestCnt string
+			Etcd2SendingBandwidthRate string
 
-			Etcd3Endpoint string
-			Etcd3Name     string
-			Etcd3ID       string
-			Etcd3State    string
+			Etcd3Name                 string
+			Etcd3Endpoint             string
+			Etcd3ID                   string
+			Etcd3State                string
+			Etcd3StartTime            string
+			Etcd3LeaderUptime         string
+			Etcd3RecvAppendRequestCnt string
+			Etcd3RecvingBandwidthRate string
+			Etcd3SendAppendRequestCnt string
+			Etcd3SendingBandwidthRate string
 
-			Etcd4Endpoint string
-			Etcd4Name     string
-			Etcd4ID       string
-			Etcd4State    string
+			Etcd4Name                 string
+			Etcd4Endpoint             string
+			Etcd4ID                   string
+			Etcd4State                string
+			Etcd4StartTime            string
+			Etcd4LeaderUptime         string
+			Etcd4RecvAppendRequestCnt string
+			Etcd4RecvingBandwidthRate string
+			Etcd4SendAppendRequestCnt string
+			Etcd4SendingBandwidthRate string
 
-			Etcd5Endpoint string
-			Etcd5Name     string
-			Etcd5ID       string
-			Etcd5State    string
+			Etcd5Name                 string
+			Etcd5Endpoint             string
+			Etcd5ID                   string
+			Etcd5State                string
+			Etcd5StartTime            string
+			Etcd5LeaderUptime         string
+			Etcd5RecvAppendRequestCnt string
+			Etcd5RecvingBandwidthRate string
+			Etcd5SendAppendRequestCnt string
+			Etcd5SendingBandwidthRate string
 		}{
-			endpoint1,
 			name1,
+			endpoint1,
 			etcd1ID,
 			etcd1State,
+			etcd1StartTime,
+			etcd1LeaderUptime,
+			etcd1RecvAppendRequestCnt,
+			etcd1RecvingBandwidthRate,
+			etcd1SendAppendRequestCnt,
+			etcd1SendingBandwidthRate,
 
-			endpoint2,
 			name2,
+			endpoint2,
 			etcd2ID,
 			etcd2State,
+			etcd2StartTime,
+			etcd2LeaderUptime,
+			etcd2RecvAppendRequestCnt,
+			etcd2RecvingBandwidthRate,
+			etcd2SendAppendRequestCnt,
+			etcd2SendingBandwidthRate,
 
-			endpoint3,
 			name3,
+			endpoint3,
 			etcd3ID,
 			etcd3State,
+			etcd3StartTime,
+			etcd3LeaderUptime,
+			etcd3RecvAppendRequestCnt,
+			etcd3RecvingBandwidthRate,
+			etcd3SendAppendRequestCnt,
+			etcd3SendingBandwidthRate,
 
-			endpoint4,
 			name4,
+			endpoint4,
 			etcd4ID,
 			etcd4State,
+			etcd4StartTime,
+			etcd4LeaderUptime,
+			etcd4RecvAppendRequestCnt,
+			etcd4RecvingBandwidthRate,
+			etcd4SendAppendRequestCnt,
+			etcd4SendingBandwidthRate,
 
-			endpoint5,
 			name5,
+			endpoint5,
 			etcd5ID,
 			etcd5State,
+			etcd5StartTime,
+			etcd5LeaderUptime,
+			etcd5RecvAppendRequestCnt,
+			etcd5RecvingBandwidthRate,
+			etcd5SendAppendRequestCnt,
+			etcd5SendingBandwidthRate,
 		}
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
 			return err

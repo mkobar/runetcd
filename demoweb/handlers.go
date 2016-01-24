@@ -125,6 +125,7 @@ func startClusterHandler(ctx context.Context, w http.ResponseWriter, req *http.R
 				toRun = true
 			}
 		}
+		toRun = len(globalCache.perUserID) < 2000 // only allow 2,000 concurrent users
 		globalCache.mu.Unlock()
 		if !toRun {
 			// globalCache.perUserID[userID].bufStream <- boldHTMLMsg(fmt.Sprintf("Limit exceeded (%v since last)! Please wait a few minutes or run locally!", sub))
@@ -145,6 +146,7 @@ func spawnCluster(userID string) {
 	defer func() {
 		if err := recover(); err != nil {
 			globalCache.perUserID[userID].bufStream <- fmt.Sprintf("[cluster - panic] %+v", err)
+			delete(globalCache.perUserID, userID)
 			return
 		}
 	}()

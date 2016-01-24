@@ -52,7 +52,7 @@ func init() {
 
 func init() {
 	Command.PersistentFlags().StringVarP(&cmdFlag.WebPort, "port", "p", ":8080", "Port to serve the dashboard.")
-	Command.PersistentFlags().DurationVarP(&cmdFlag.RefreshRate, "refresh-rate", "r", 3*time.Second, "Refresh interval to get stats and metrics.")
+	Command.PersistentFlags().DurationVarP(&cmdFlag.RefreshRate, "refresh-rate", "r", 10*time.Second, "Refresh interval to get stats and metrics.")
 }
 
 func CommandFunc(cmd *cobra.Command, args []string) {

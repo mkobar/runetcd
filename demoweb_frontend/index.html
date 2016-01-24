@@ -84,8 +84,8 @@
                 async: true,
                 dataType: "json",
                 success: function(dataObj) {
-                    document.getElementById('etcd1_Endpoint').innerHTML = "Endpoint: <b>" + dataObj.Etcd1Endpoint + "</b>";
                     document.getElementById('etcd1_Name').innerHTML = "Name: <b>" + dataObj.Etcd1Name + "</b>";
+                    document.getElementById('etcd1_Endpoint').innerHTML = "Endpoint: <b>" + dataObj.Etcd1Endpoint + "</b>";
                     document.getElementById('etcd1_ID').innerHTML = "ID: <b>" + dataObj.Etcd1ID + "</b>";
                     if (dataObj.Etcd1State == "StateLeader") {
                         document.getElementById('etcd1_state_button').className = "btn btn-primary";
@@ -104,8 +104,8 @@
                         document.getElementById('etcd1_state').className = "fa fa-pause-circle";
                     }
 
-                    document.getElementById('etcd2_Endpoint').innerHTML = "Endpoint: <b>" + dataObj.Etcd2Endpoint + "</b>";
                     document.getElementById('etcd2_Name').innerHTML = "Name: <b>" + dataObj.Etcd2Name + "</b>";
+                    document.getElementById('etcd2_Endpoint').innerHTML = "Endpoint: <b>" + dataObj.Etcd2Endpoint + "</b>";
                     document.getElementById('etcd2_ID').innerHTML = "ID: <b>" + dataObj.Etcd2ID + "</b>";
                     if (dataObj.Etcd2State == "StateLeader") {
                         document.getElementById('etcd2_state_button').className = "btn btn-primary";
@@ -124,8 +124,8 @@
                         document.getElementById('etcd2_state').className = "fa fa-pause-circle";
                     }
 
-                    document.getElementById('etcd3_Endpoint').innerHTML = "Endpoint: <b>" + dataObj.Etcd3Endpoint + "</b>";
                     document.getElementById('etcd3_Name').innerHTML = "Name: <b>" + dataObj.Etcd3Name + "</b>";
+                    document.getElementById('etcd3_Endpoint').innerHTML = "Endpoint: <b>" + dataObj.Etcd3Endpoint + "</b>";
                     document.getElementById('etcd3_ID').innerHTML = "ID: <b>" + dataObj.Etcd3ID + "</b>";
                     if (dataObj.Etcd3State == "StateLeader") {
                         document.getElementById('etcd3_state_button').className = "btn btn-primary";
@@ -1097,7 +1097,6 @@
                 </div>
             </div>
         </div>
-    </div>
     </div>
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://code.jquery.com/ui/1.12.0-beta.1/jquery-ui.js"></script>
