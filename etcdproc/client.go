@@ -767,17 +767,36 @@ func GetStats(endpoints ...string) (map[string]ServerStats, map[string]string, e
 	return rm, nameToEndpoint, nil
 }
 
+var defaultMetrics = map[string]float64{
+	"etcd_storage_keys_total":              0.0,
+	"etcd_storage_db_total_size_in_bytes":  0.0,
+	"etcd_wal_fsync_durations_seconds_sum": 0.0,
+	"go_gc_duration_seconds_sum":           0.0,
+	"go_memstats_alloc_bytes":              0.0,
+	"go_memstats_heap_alloc_bytes":         0.0,
+	"go_memstats_mallocs_total":            0.0,
+	"process_cpu_seconds_total":            0.0,
+	"go_goroutines":                        0.0,
+	"etcd_storage_watcher_total":           0.0,
+	"etcd_storage_watch_stream_total":      0.0,
+	"etcd_storage_slow_watcher_total":      0.0,
+}
+
 // GetMetrics returns the metrics of the cluster.
 //
 // Some useful metrics:
 // 	- etcd_storage_keys_total
 // 	- etcd_storage_db_total_size_in_bytes
-// 	- etcd_storage_db_total_size_in_bytes
-// 	- etcd_storage_db_total_size_in_bytes
-// 	- etcd_storage_db_total_size_in_bytes
-// 	- etcd_storage_db_total_size_in_bytes
-// 	- etcd_storage_db_total_size_in_bytes
-// 	- etcd_storage_db_total_size_in_bytes
+// 	- etcd_wal_fsync_durations_seconds_sum
+// 	- go_gc_duration_seconds_sum
+// 	- go_memstats_alloc_bytes
+// 	- go_memstats_heap_alloc_bytes
+// 	- go_memstats_mallocs_total
+// 	- process_cpu_seconds_total
+// 	- go_goroutines
+// 	- etcd_storage_watcher_total
+// 	- etcd_storage_watch_stream_total
+// 	- etcd_storage_slow_watcher_total
 //
 func (c *Cluster) GetMetrics() (map[string]map[string]float64, map[string]string, error) {
 	nameToEndpoints := make(map[string][]string)
@@ -790,17 +809,13 @@ func (c *Cluster) GetMetrics() (map[string]map[string]float64, map[string]string
 		}
 	}
 
-	emptyMap := map[string]float64{
-		"etcd_storage_keys_total":             0.0,
-		"etcd_storage_db_total_size_in_bytes": 0.0,
-	}
 	rm := make(map[string]map[string]float64)
 	nameToEndpoint := make(map[string]string)
 	for name, endpoints := range nameToEndpoints {
 		for _, endpoint := range endpoints {
 			resp, err := http.Get(endpoint + "/metrics")
 			if err != nil {
-				rm[endpoint] = emptyMap
+				rm[endpoint] = defaultMetrics
 				nameToEndpoint[name] = endpoint
 				continue
 			}
@@ -824,7 +839,7 @@ func (c *Cluster) GetMetrics() (map[string]map[string]float64, map[string]string
 				mm[ts[0]] = fv
 			}
 			if err := scanner.Err(); err != nil {
-				rm[endpoint] = emptyMap
+				rm[endpoint] = defaultMetrics
 				nameToEndpoint[name] = endpoint
 				continue
 			}
@@ -844,12 +859,16 @@ func (c *Cluster) GetMetrics() (map[string]map[string]float64, map[string]string
 // Some useful metrics:
 // 	- etcd_storage_keys_total
 // 	- etcd_storage_db_total_size_in_bytes
-// 	- etcd_storage_db_total_size_in_bytes
-// 	- etcd_storage_db_total_size_in_bytes
-// 	- etcd_storage_db_total_size_in_bytes
-// 	- etcd_storage_db_total_size_in_bytes
-// 	- etcd_storage_db_total_size_in_bytes
-// 	- etcd_storage_db_total_size_in_bytes
+// 	- etcd_wal_fsync_durations_seconds_sum
+// 	- go_gc_duration_seconds_sum
+// 	- go_memstats_alloc_bytes
+// 	- go_memstats_heap_alloc_bytes
+// 	- go_memstats_mallocs_total
+// 	- process_cpu_seconds_total
+// 	- go_goroutines
+// 	- etcd_storage_watcher_total
+// 	- etcd_storage_watch_stream_total
+// 	- etcd_storage_slow_watcher_total
 //
 func GetMetrics(endpoints ...string) (map[string]map[string]float64, map[string]string, error) {
 	_, nameToEndpoint, err := GetStats(endpoints...)
@@ -857,15 +876,11 @@ func GetMetrics(endpoints ...string) (map[string]map[string]float64, map[string]
 		return nil, nil, err
 	}
 
-	emptyMap := map[string]float64{
-		"etcd_storage_keys_total":             0.0,
-		"etcd_storage_db_total_size_in_bytes": 0.0,
-	}
 	rm := make(map[string]map[string]float64)
 	for _, endpoint := range endpoints {
 		resp, err := http.Get(endpoint + "/metrics")
 		if err != nil {
-			rm[endpoint] = emptyMap
+			rm[endpoint] = defaultMetrics
 			continue
 		}
 
@@ -888,7 +903,7 @@ func GetMetrics(endpoints ...string) (map[string]map[string]float64, map[string]
 			mm[ts[0]] = fv
 		}
 		if err := scanner.Err(); err != nil {
-			rm[endpoint] = emptyMap
+			rm[endpoint] = defaultMetrics
 			continue
 		}
 		resp.Body.Close()

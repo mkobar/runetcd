@@ -290,33 +290,33 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 			etcd3State = v.State
 		}
 		resp := struct {
-			Etcd1Endpoint string
 			Etcd1Name     string
+			Etcd1Endpoint string
 			Etcd1ID       string
 			Etcd1State    string
 
-			Etcd2Endpoint string
 			Etcd2Name     string
+			Etcd2Endpoint string
 			Etcd2ID       string
 			Etcd2State    string
 
-			Etcd3Endpoint string
 			Etcd3Name     string
+			Etcd3Endpoint string
 			Etcd3ID       string
 			Etcd3State    string
 		}{
-			endpoint1,
 			name1,
+			endpoint1,
 			etcd1ID,
 			etcd1State,
 
-			endpoint2,
 			name2,
+			endpoint2,
 			etcd2ID,
 			etcd2State,
 
-			endpoint3,
 			name3,
+			endpoint3,
 			etcd3ID,
 			etcd3State,
 		}
@@ -337,31 +337,37 @@ func metricsHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 
 	emptyResp := struct {
 		Etcd1Name             string
+		Etcd1Endpoint         string
 		Etcd1StorageKeysTotal float64
 		Etcd1StorageBytes     float64
 		Etcd1StorageBytesStr  string
 
 		Etcd2Name             string
+		Etcd2Endpoint         string
 		Etcd2StorageKeysTotal float64
 		Etcd2StorageBytes     float64
 		Etcd2StorageBytesStr  string
 
 		Etcd3Name             string
+		Etcd3Endpoint         string
 		Etcd3StorageKeysTotal float64
 		Etcd3StorageBytes     float64
 		Etcd3StorageBytesStr  string
 	}{
 		"etcd1",
+		"",
 		0.0,
 		0.0,
 		"0 bytes",
 
 		"etcd2",
+		"",
 		0.0,
 		0.0,
 		"0 bytes",
 
 		"etcd3",
+		"",
 		0.0,
 		0.0,
 		"0 bytes",
@@ -431,31 +437,37 @@ func metricsHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 		}
 		resp := struct {
 			Etcd1Name             string
+			Etcd1Endpoint         string
 			Etcd1StorageKeysTotal float64
 			Etcd1StorageBytes     float64
 			Etcd1StorageBytesStr  string
 
 			Etcd2Name             string
+			Etcd2Endpoint         string
 			Etcd2StorageKeysTotal float64
 			Etcd2StorageBytes     float64
 			Etcd2StorageBytesStr  string
 
 			Etcd3Name             string
+			Etcd3Endpoint         string
 			Etcd3StorageKeysTotal float64
 			Etcd3StorageBytes     float64
 			Etcd3StorageBytesStr  string
 		}{
 			name1,
+			endpoint1,
 			etcd1StorageKeysTotal,
 			etcd1StorageBytes,
 			etcd1StorageBytesStr,
 
 			name2,
+			endpoint2,
 			etcd2StorageKeysTotal,
 			etcd2StorageBytes,
 			etcd2StorageBytesStr,
 
 			name3,
+			endpoint3,
 			etcd3StorageKeysTotal,
 			etcd3StorageBytes,
 			etcd3StorageBytesStr,

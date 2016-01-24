@@ -153,7 +153,7 @@
             }
         });
 
-        $('#chart_total_keys').highcharts({
+        $('#chart_StorageKeysTotal').highcharts({
             chart: {
                 type: 'spline',
                 animation: Highcharts.svg, // don't animate in old IE
@@ -200,15 +200,21 @@
                                     var x = (new Date()).getTime();
                                     series1.addPoint({
                                         x: x,
-                                        y: dataObj.Etcd1StorageKeysTotal
+                                        y: dataObj.Etcd1StorageKeysTotal,
+                                        name: dataObj.Etcd1Name,
+                                        endpoint: dataObj.Etcd1Endpoint
                                     }, true, true);
                                     series2.addPoint({
                                         x: x,
-                                        y: dataObj.Etcd2StorageKeysTotal
+                                        y: dataObj.Etcd2StorageKeysTotal,
+                                        name: dataObj.Etcd2Name,
+                                        endpoint: dataObj.Etcd2Endpoint
                                     }, true, true);
                                     series3.addPoint({
                                         x: x,
-                                        y: dataObj.Etcd3StorageKeysTotal
+                                        y: dataObj.Etcd3StorageKeysTotal,
+                                        name: dataObj.Etcd3Name,
+                                        endpoint: dataObj.Etcd3Endpoint
                                     }, true, true);
                                 }
                             });
@@ -238,7 +244,7 @@
             },
             tooltip: {
                 formatter: function() {
-                    return '<b>' + this.series.name + '</b><br/>' +
+                    return '<b>' + this.point.name + "(" + this.point.endpoint + ")" + '</b><br/>' +
                         Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
                         Highcharts.numberFormat(this.y, 2);
                 }
@@ -297,7 +303,7 @@
             }]
         });
 
-        $('#chart_total_megabytes').highcharts({
+        $('#chart_StorageBytes').highcharts({
             chart: {
                 type: 'spline',
                 animation: Highcharts.svg, // don't animate in old IE
@@ -345,16 +351,22 @@
                                     series1.addPoint({
                                         x: x,
                                         y: dataObj.Etcd1StorageBytes,
+                                        name: dataObj.Etcd1Name,
+                                        endpoint: dataObj.Etcd1Endpoint,
                                         bytes: dataObj.Etcd1StorageBytesStr
                                     }, true, true);
                                     series2.addPoint({
                                         x: x,
                                         y: dataObj.Etcd2StorageBytes,
+                                        name: dataObj.Etcd2Name,
+                                        endpoint: dataObj.Etcd2Endpoint,
                                         bytes: dataObj.Etcd2StorageBytesStr
                                     }, true, true);
                                     series3.addPoint({
                                         x: x,
                                         y: dataObj.Etcd3StorageBytes,
+                                        name: dataObj.Etcd3Name,
+                                        endpoint: dataObj.Etcd3Endpoint,
                                         bytes: dataObj.Etcd3StorageBytesStr
                                     }, true, true);
                                 }
@@ -385,7 +397,7 @@
             },
             tooltip: {
                 formatter: function() {
-                    return '<b>' + this.series.name + '</b><br/>' +
+                    return '<b>' + this.point.name + "(" + this.point.endpoint + ")" + '</b><br/>' +
                         Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
                         Highcharts.numberFormat(this.y, 2) + " (" + this.point.bytes + ")";
                 }
@@ -946,12 +958,12 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="card card-block">
-                                    <div id="chart_total_keys" style="margin: 0 auto"></div>
+                                    <div id="chart_StorageKeysTotal" style="margin: 0 auto"></div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="card card-block">
-                                    <div id="chart_total_megabytes" style="margin: 0 auto"></div>
+                                    <div id="chart_StorageBytes" style="margin: 0 auto"></div>
                                 </div>
                             </div>
                         </div>
