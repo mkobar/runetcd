@@ -128,7 +128,7 @@
         $('#start_cluster').click(function(e) {
             // TODO: dynamically change timeout
             runWithTimeout(receiveStream, 500, 20);     // first 10 seconds
-            runWithTimeout(receiveStream, 1000, 120);   // next 2 minutes
+            runWithTimeout(receiveStream, 5000, 24);   // next 2 minutes
             runWithTimeout(receiveStream, 10000, 300);  // next 5 minutes
             runWithTimeout(receiveStream, 30000, 500);
             runWithTimeout(receiveStream, 60000, 700);
