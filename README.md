@@ -70,7 +70,23 @@ You can use this as an `etcd` dashboard:
 - https://github.com/coreos/etcd
 - https://github.com/rakyll/statik
 - https://github.com/mattn/goreman
-- https://github.com/gyuho/psn
+
+And other external dependencies:
+
+```
+go get -v -u github.com/Sirupsen/logrus
+go get -v -u github.com/coreos/etcd/Godeps/_workspace/src/golang.org/x/net/context
+go get -v -u github.com/coreos/etcd/Godeps/_workspace/src/google.golang.org/grpc
+go get -v -u github.com/coreos/etcd/client
+go get -v -u github.com/coreos/etcd/etcdserver/etcdserverpb
+go get -v -u github.com/dustin/go-humanize
+go get -v -u github.com/fatih/color
+go get -v -u github.com/gorilla/websocket
+go get -v -u github.com/gyuho/psn/ss
+go get -v -u github.com/satori/go.uuid
+go get -v -u github.com/spf13/cobra
+go get -v -u golang.org/x/net/context
+```
 
 [↑ top](#runetcd--)
 <br><br>
