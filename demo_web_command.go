@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -347,29 +348,74 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 
 		globalCache.mu.Lock()
 		cs := globalCache.perUserID[userID].cluster
+		nameToStats, leaderNames, err := cs.GetStats()
+		var errMsg error
+		if err != nil {
+			errMsg = err
+		}
+		nameToMetrics, err := cs.GetMetrics()
+		if err != nil {
+			errMsg = err
+		}
 		globalCache.mu.Unlock()
-
-		if vm, ls, err := cs.GetStats(); err != nil {
-			fmt.Printf("exiting with: %+v\n", err)
-			return err
-		} else {
-			fmt.Printf("%+v\n", vm)
-			fmt.Printf("[LEADER] %#q\n", ls)
+		if errMsg != nil {
+			fmt.Fprintln(w, "exiting with:", errMsg)
+			return errMsg
 		}
 
-		if vm, err := cs.GetMetrics(); err != nil {
-			fmt.Fprintln(w, "exiting with:", err)
+		names := []string{}
+		for n := range nameToStats {
+			names = append(names, n)
+		}
+		sort.Strings(names)
+		if len(names) != 3 {
+			return fmt.Errorf("expected 3 members but got %d members", len(names))
+		}
+
+		resp := struct {
+			LeaderNames []string
+
+			Etcd1Name             string
+			Etcd1ID               string
+			Etcd1StorageKeysTotal float64
+			Etcd1StorageBytes     float64
+			Etcd1StorageBytesStr  string
+
+			Etcd2Name             string
+			Etcd2ID               string
+			Etcd2StorageKeysTotal float64
+			Etcd2StorageBytes     float64
+			Etcd2StorageBytesStr  string
+
+			Etcd3Name             string
+			Etcd3ID               string
+			Etcd3StorageKeysTotal float64
+			Etcd3StorageBytes     float64
+			Etcd3StorageBytesStr  string
+		}{
+			leaderNames,
+
+			names[0],
+			nameToStats[names[0]].ID,
+			nameToMetrics[names[0]]["etcd_storage_keys_total"],
+			nameToMetrics[names[0]]["etcd_storage_db_total_size_in_bytes"],
+			humanize.Bytes(uint64(nameToMetrics[names[0]]["etcd_storage_db_total_size_in_bytes"])),
+
+			names[1],
+			nameToStats[names[1]].ID,
+			nameToMetrics[names[1]]["etcd_storage_keys_total"],
+			nameToMetrics[names[1]]["etcd_storage_db_total_size_in_bytes"],
+			humanize.Bytes(uint64(nameToMetrics[names[1]]["etcd_storage_db_total_size_in_bytes"])),
+
+			names[2],
+			nameToStats[names[2]].ID,
+			nameToMetrics[names[2]]["etcd_storage_keys_total"],
+			nameToMetrics[names[2]]["etcd_storage_db_total_size_in_bytes"],
+			humanize.Bytes(uint64(nameToMetrics[names[2]]["etcd_storage_db_total_size_in_bytes"])),
+		}
+
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
 			return err
-		} else {
-			for n, mm := range vm {
-				var fb uint64
-				if fv, ok := mm["etcd_storage_db_total_size_in_bytes"]; ok {
-					fb = uint64(fv)
-				}
-				fmt.Printf("%s: etcd_storage_keys_total             = %f\n", n, mm["etcd_storage_keys_total"])
-				fmt.Printf("%s: etcd_storage_db_total_size_in_bytes = %s\n", n, humanize.Bytes(fb))
-				fmt.Printf("\n")
-			}
 		}
 
 		fmt.Fprintln(w, boldHTMLMsg("Stats successfully requested!!!"))
