@@ -31,7 +31,7 @@ So must `etcd` be easy to try and play.
 Public demo here https://runetcd.io.
 
 ```
-gif...
+
 ```
 
 It runs exactly the same `etcd` cluster as in production. Each client launches
@@ -42,12 +42,13 @@ Distributed database does A LOT OF RPC calls. So it's very easy to overload
 experience full-powered `etcd`, PLEASE run CLI locally. And here's how:
 
 ```
-commands...
+
 
 ```
 
-It's that easy! Just etcd binary, nothing else. You don't even need Internet
-connection.
+It's that easy! Just etcd binary and internet connection for javascript
+libraries. In the future, I may get rid of javascript dependency using
+https://github.com/rakyll/statik.
 
 [↑ top](#runetcd--)
 <br><br>
@@ -68,7 +69,6 @@ You can use this as an `etcd` dashboard:
 ## Credits
 
 - https://github.com/coreos/etcd
-- https://github.com/rakyll/statik
 - https://github.com/mattn/goreman
 
 And other external dependencies:
