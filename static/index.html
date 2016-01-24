@@ -155,7 +155,6 @@
                 async: true,
                 dataType: "json",
                 success: function(dataObj) {
-                    console.log(dataObj);
                     document.getElementById('etcd1_name').innerHTML = "Name: <b>" + dataObj.Etcd1Name + "</b>";
                     document.getElementById('etcd1_id').innerHTML = "ID: <b>" + dataObj.Etcd1ID + "</b>";
                     if (dataObj.Etcd1State == "StateLeader") {

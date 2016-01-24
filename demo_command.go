@@ -95,7 +95,8 @@ func runDemoTerminal(writer io.Writer, isSimple, isClientTLS, isPeerTLS bool, ce
 			time.Sleep(globalFlag.DemoPause)
 			fmt.Fprintf(writer, "\n")
 			fmt.Fprintln(writer, "####### Stressing one member")
-			if err := c.Stress(writer, nameToStress, globalFlag.DemoConnectionNumber, globalFlag.DemoClientNumber, globalFlag.DemoStressNumber, stressKeyN, stressValN); err != nil {
+			if err := c.SimpleStress(writer, run.ToTerminal, nameToStress); err != nil {
+				// if err := c.Stress(writer, nameToStress, globalFlag.DemoConnectionNumber, globalFlag.DemoClientNumber, globalFlag.DemoStressNumber, stressKeyN, stressValN); err != nil {
 				fmt.Fprintln(writer, "exiting with:", err)
 				return
 			}

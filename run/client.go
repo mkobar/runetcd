@@ -203,14 +203,14 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 	keys := make([][]byte, stressN)
 	vals := make([][]byte, stressN)
 	for i := range keys {
-		keys[i] = []byte(fmt.Sprintf("random_key_%d", i))
-		vals[i] = []byte(fmt.Sprintf(`{"value": "this is random value created at %s"}`, time.Now().String()[:19]))
+		keys[i] = []byte(fmt.Sprintf("sample_%d", i))
+		vals[i] = []byte(fmt.Sprintf(`{"value": "created at %s"}`, time.Now().String()[:19]))
 	}
 	switch m.outputOption {
 	case ToTerminal:
 		fmt.Fprintf(m.w, "[Stress] Done with generating %d random data! Took %v\n", stressN, time.Since(sr))
 	case ToHTML:
-		m.BufferStream <- fmt.Sprintf("[Stress] Done with generating %d random data! Took %v\n", stressN, time.Since(sr))
+		m.BufferStream <- fmt.Sprintf("[Stress] Done with generating %d random data! Took %v", stressN, time.Since(sr))
 		if f, ok := m.w.(http.Flusher); ok {
 			if f != nil {
 				f.Flush()
@@ -227,7 +227,17 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 		clients[i] = etcdserverpb.NewKVClient(conns[i%int(connsN)])
 	}
 
-	fmt.Fprintf(w, "[Stress] Started stressing with GRPC (endpoint %s).\n", endpoint)
+	switch m.outputOption {
+	case ToTerminal:
+		fmt.Fprintf(m.w, "[Stress] Started stressing with GRPC (endpoint %s)\n", endpoint)
+	case ToHTML:
+		m.BufferStream <- fmt.Sprintf("[Stress] Started stressing with GRPC (endpoint %s)", endpoint)
+		if f, ok := m.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
 
 	requests := make(chan *etcdserverpb.PutRequest, stressN)
 	done, errChan := make(chan struct{}), make(chan error)
@@ -238,6 +248,17 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 				if _, err := clients[i].Put(context.Background(), r); err != nil {
 					errChan <- err
 					return
+				}
+				switch m.outputOption {
+				case ToTerminal:
+					fmt.Fprintf(m.w, "[PUT] %s / %s\n", r.Key, r.Value)
+				case ToHTML:
+					m.BufferStream <- fmt.Sprintf("[Stress - PUT] %s / %s", r.Key, r.Value)
+					if f, ok := m.w.(http.Flusher); ok {
+						if f != nil {
+							f.Flush()
+						}
+					}
 				}
 			}
 			done <- struct{}{}
@@ -268,12 +289,22 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 
 	tt := time.Since(st)
 	pt := tt / time.Duration(stressN)
-	fmt.Fprintf(
-		w,
-		"[Stress] Done! Took %v for %d requests(%v per each) with %d connection(s), %d client(s) (endpoint: %s)\n",
+	fMsg := fmt.Sprintf(
+		"[Stress] Done! Took %v for %d requests(%v per each) with %d connection(s), %d client(s) (endpoint: %s)",
 		tt, stressN, pt, connsN, clientsN, endpoint,
 	)
-	fmt.Fprintf(w, "\n")
+	switch m.outputOption {
+	case ToTerminal:
+		fmt.Fprintln(w, fMsg)
+	case ToHTML:
+		m.BufferStream <- fMsg
+		if f, ok := m.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -391,7 +422,7 @@ type ServerStats struct {
 		StartTime time.Time `json:"startTime"`
 	} `json:"leaderInfo"`
 
-	RecvAppendRequestCnt uint64  `json:"recvAppendRequestCnt,"`
+	RecvAppendRequestCnt uint64  `json:"recvAppendRequestCnt"`
 	RecvingPkgRate       float64 `json:"recvPkgRate,omitempty"`
 	RecvingBandwidthRate float64 `json:"recvBandwidthRate,omitempty"`
 

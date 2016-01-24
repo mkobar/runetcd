@@ -314,7 +314,7 @@ func startStressHandler(ctx context.Context, w http.ResponseWriter, req *http.Re
 		globalCache.mu.Unlock()
 
 		// TODO: print out readable k-v
-		if err := cs.Stress(w, nameToStress, globalFlag.DemoWebConnectionNumber, globalFlag.DemoWebClientNumber, globalFlag.DemoWebStressNumber, stressKeyN, stressValN); err != nil {
+		if err := cs.SimpleStress(os.Stdout, run.ToHTML, nameToStress); err != nil {
 			fmt.Printf("exiting with: %+v\n", err)
 			return err
 		}
