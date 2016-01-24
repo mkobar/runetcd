@@ -83,14 +83,14 @@ You can use this as an `etcd` dashboard:
 
 Got some realtime updates, logs up and running!
 
-![changelog_01](demos/changelog_01)
+![changelog_01](./demos/changelog_01)
 
 <br>
 ##### 3AM Saturday, January 23, 2016
 
 CLI demo done.
 
-![changelog_01](demos/changelog_00)
+![changelog_00](./demos/changelog_00)
 
 [↑ top](#runetcd--)
 <br><br>
