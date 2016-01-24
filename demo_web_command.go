@@ -347,7 +347,7 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 
 		globalCache.mu.Lock()
 		cs := globalCache.perUserID[userID].cluster
-		nameToStats, leaderNames, err := cs.GetStats()
+		nameToStats, err := cs.GetStats()
 		var errMsg error
 		if err != nil {
 			errMsg = err
@@ -372,8 +372,6 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 		}
 
 		resp := struct {
-			LeaderNames []string
-
 			Etcd1Name             string
 			Etcd1ID               string
 			Etcd1State            string
@@ -395,8 +393,6 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 			Etcd3StorageBytes     float64
 			Etcd3StorageBytesStr  string
 		}{
-			leaderNames,
-
 			names[0],
 			nameToStats[names[0]].ID,
 			nameToStats[names[0]].State,

@@ -114,12 +114,11 @@ func runDemoTerminal(writer io.Writer, isSimple, isClientTLS, isPeerTLS bool, ce
 				time.Sleep(globalFlag.DemoPause)
 				fmt.Fprintf(writer, "\n")
 				fmt.Fprintln(writer, "####### Stats")
-				if vm, ls, err := c.GetStats(); err != nil {
+				if vm, err := c.GetStats(); err != nil {
 					fmt.Fprintln(writer, "exiting writerith:", err)
 					return
 				} else {
 					fmt.Fprintf(writer, "%+v\n", vm)
-					fmt.Fprintf(writer, "[LEADER] %#q\n", ls)
 				}
 
 				time.Sleep(globalFlag.DemoPause)

@@ -149,6 +149,8 @@
             });
         });
 
+        var x = 0;
+
         var receiveStats = function() {
             $.ajax({
                 type: "GET",
@@ -156,7 +158,8 @@
                 async: true,
                 dataType: "json",
                 success: function(dataObj) {
-                    console.log(dataObj);
+                    console.log(x, dataObj);
+                    x = x + 1;
 
                     document.getElementById('etcd1_name').innerHTML = "Name: <b>" + dataObj.Etcd1Name + "</b>";
                     document.getElementById('etcd1_id').innerHTML = "ID: <b>" + dataObj.Etcd1ID + "</b>";
@@ -169,6 +172,9 @@
                     } else if (dataObj.Etcd1State == "StateFollower") {
                         document.getElementById('etcd1_state_button').className = "btn btn-warning";
                         document.getElementById('etcd1_state').className = "fa fa-child";
+                    } else if (dataObj.Etcd1State == "Unreachable") {
+                        document.getElementById('etcd1_state_button').className = "btn btn-danger";
+                        document.getElementById('etcd1_state').className = "fa fa-frown-o";
                     } else {
                         document.getElementById('etcd1_state_button').className = "btn btn-secondary-outline";
                         document.getElementById('etcd1_state').className = "fa fa-pause-circle";
@@ -185,6 +191,9 @@
                     } else if (dataObj.Etcd2State == "StateFollower") {
                         document.getElementById('etcd2_state_button').className = "btn btn-warning";
                         document.getElementById('etcd2_state').className = "fa fa-child";
+                    } else if (dataObj.Etcd2State == "Unreachable") {
+                        document.getElementById('etcd2_state_button').className = "btn btn-danger";
+                        document.getElementById('etcd2_state').className = "fa fa-frown-o";
                     } else {
                         document.getElementById('etcd2_state_button').className = "btn btn-secondary-outline";
                         document.getElementById('etcd2_state').className = "fa fa-pause-circle";
@@ -201,6 +210,9 @@
                     } else if (dataObj.Etcd3State == "StateFollower") {
                         document.getElementById('etcd3_state_button').className = "btn btn-warning";
                         document.getElementById('etcd3_state').className = "fa fa-child";
+                    } else if (dataObj.Etcd3State == "Unreachable") {
+                        document.getElementById('etcd3_state_button').className = "btn btn-danger";
+                        document.getElementById('etcd3_state').className = "fa fa-frown-o";
                     } else {
                         document.getElementById('etcd3_state_button').className = "btn btn-secondary-outline";
                         document.getElementById('etcd3_state').className = "fa fa-pause-circle";
@@ -211,8 +223,7 @@
             });
         }
         $('#start_cluster').click(function(e) {
-            runWithTimeout(receiveStats, 1000, 30);    // first 30 seconds
-            runWithTimeout(receiveStats, 5000, 36);    // next 3 minutes
+            runWithTimeout(receiveStats, 7000, 36);
             runWithTimeout(receiveStats, 10000, 1000);
         });
 

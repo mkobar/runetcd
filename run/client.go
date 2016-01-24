@@ -422,7 +422,7 @@ type ServerStats struct {
 		StartTime time.Time `json:"startTime"`
 	} `json:"leaderInfo"`
 
-	RecvAppendRequestCnt uint64  `json:"recvAppendRequestCnt"`
+	RecvAppendRequestCnt uint64  `json:"recvAppendRequestCnt,"`
 	RecvingPkgRate       float64 `json:"recvPkgRate,omitempty"`
 	RecvingBandwidthRate float64 `json:"recvBandwidthRate,omitempty"`
 
@@ -432,7 +432,7 @@ type ServerStats struct {
 }
 
 // GetStats returns the leader of the cluster.
-func (c *Cluster) GetStats() (map[string]ServerStats, []string, error) {
+func (c *Cluster) GetStats() (map[string]ServerStats, error) {
 	nameToEndpoint := make(map[string][]string)
 	for n, m := range c.NameToMember {
 		for v := range m.Flags.ListenClientURLs {
@@ -445,35 +445,30 @@ func (c *Cluster) GetStats() (map[string]ServerStats, []string, error) {
 
 	rm := make(map[string]ServerStats)
 	for name, endpoints := range nameToEndpoint {
-		var errMsg error
 		for _, endpoint := range endpoints {
+			sts := ServerStats{}
 			resp, err := http.Get(endpoint + "/v2/stats/self")
 			if err != nil {
-				errMsg = err
+				sts.Name = rm[name].Name
+				sts.ID = rm[name].ID
+				sts.State = "Unreachable"
+				rm[name] = sts
 				continue
 			}
 
-			sts := ServerStats{}
 			if err := json.NewDecoder(resp.Body).Decode(&sts); err != nil {
-				errMsg = err
+				sts.Name = rm[name].Name
+				sts.ID = rm[name].ID
+				sts.State = "Unreachable"
+				rm[name] = sts
 				continue
 			}
 			resp.Body.Close()
 			rm[name] = sts
 		}
-		if errMsg != nil {
-			return nil, nil, errMsg
-		}
 	}
 
-	leaderNames := []string{}
-	for name, stat := range rm {
-		if stat.State == "StateLeader" {
-			leaderNames = append(leaderNames, name)
-		}
-	}
-
-	return rm, leaderNames, nil
+	return rm, nil
 }
 
 // GetMetrics returns the metrics of the cluster.
@@ -482,6 +477,10 @@ func (c *Cluster) GetStats() (map[string]ServerStats, []string, error) {
 // 	- etcd_storage_keys_total
 // 	- etcd_storage_db_total_size_in_bytes
 func (c *Cluster) GetMetrics() (map[string]map[string]float64, error) {
+	emptyMap := map[string]float64{
+		"etcd_storage_keys_total":             0.0,
+		"etcd_storage_db_total_size_in_bytes": 0.0,
+	}
 	nameToEndpoint := make(map[string][]string)
 	for n, m := range c.NameToMember {
 		for v := range m.Flags.ListenClientURLs {
@@ -494,12 +493,10 @@ func (c *Cluster) GetMetrics() (map[string]map[string]float64, error) {
 
 	rm := make(map[string]map[string]float64)
 	for name, endpoints := range nameToEndpoint {
-		var errMsg error
-
 		for _, endpoint := range endpoints {
 			resp, err := http.Get(endpoint + "/metrics")
 			if err != nil {
-				errMsg = err
+				rm[name] = emptyMap
 				continue
 			}
 
@@ -522,16 +519,12 @@ func (c *Cluster) GetMetrics() (map[string]map[string]float64, error) {
 				mm[ts[0]] = fv
 			}
 			if err := scanner.Err(); err != nil {
-				errMsg = err
+				rm[name] = emptyMap
 				continue
 			}
 
 			resp.Body.Close()
 			rm[name] = mm
-		}
-
-		if errMsg != nil {
-			return nil, errMsg
 		}
 	}
 
