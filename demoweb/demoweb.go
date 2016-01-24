@@ -17,4 +17,5 @@ func CommandFunc(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stdout, err)
 		os.Exit(1)
 	}
+	_ = etcdBinary
 }
