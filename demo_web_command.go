@@ -335,14 +335,13 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 
 	switch req.Method {
 	case "GET":
-
 		toRun := false
 		globalCache.mu.Lock()
 		toRun = globalCache.perUserID[userID].cluster != nil
 		globalCache.mu.Unlock()
 
 		if !toRun {
-			fmt.Fprintln(w, boldHTMLMsg("Cluster is not ready to provide stats!!!"))
+			globalCache.perUserID[userID].bufStream <- boldHTMLMsg("Cluster is not ready to provide stats!!!")
 			return nil
 		}
 
@@ -359,7 +358,7 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 		}
 		globalCache.mu.Unlock()
 		if errMsg != nil {
-			fmt.Fprintln(w, "exiting with:", errMsg)
+			globalCache.perUserID[userID].bufStream <- boldHTMLMsg(fmt.Sprintf("exiting with: %v", errMsg))
 			return errMsg
 		}
 
@@ -417,8 +416,6 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
 			return err
 		}
-
-		fmt.Fprintln(w, boldHTMLMsg("Stats successfully requested!!!"))
 
 	default:
 		http.Error(w, "Method Not Allowed", 405)
