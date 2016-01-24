@@ -60,15 +60,18 @@ func wsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) er
 
 	c, err := upgrader.Upgrade(w, req, nil)
 	if err != nil {
+		globalCache.perUserID[userID].donec <- struct{}{}
 		return err
 	}
 	defer c.Close()
 	for {
 		mt, message, err := c.ReadMessage()
 		if err != nil {
+			globalCache.perUserID[userID].donec <- struct{}{}
 			return err
 		}
 		if err := c.WriteMessage(mt, message); err != nil {
+			globalCache.perUserID[userID].donec <- struct{}{}
 			return err
 		}
 	}
@@ -243,9 +246,6 @@ func startClusterHandler(ctx context.Context, w http.ResponseWriter, req *http.R
 
 func spawnCluster(userID string) {
 	defer func() {
-		globalCache.mu.Lock()
-		globalCache.perUserID[userID].cluster = nil
-		globalCache.mu.Unlock()
 		if err := recover(); err != nil {
 			globalCache.perUserID[userID].bufStream <- fmt.Sprintf("[cluster - panic] %+v", err)
 			return
@@ -274,21 +274,32 @@ func spawnCluster(userID string) {
 	globalCache.mu.Unlock()
 
 	// this does not run with the program exits with os.Exit(0)
-	defer cs.RemoveAllDataDirs()
+	defer func() {
+		cs.RemoveAllDataDirs()
+		globalCache.mu.Lock()
+		globalCache.perUserID[userID].cluster = nil
+		globalCache.mu.Unlock()
+	}()
 
-	globalCache.perUserID[userID].bufStream <- boldHTMLMsg("Starting all of those 3 members in default cluster group")
-	if err := cs.StartAll(); err != nil {
-		globalCache.perUserID[userID].bufStream <- fmt.Sprintf("[cluster - error] %+v", err)
-		return
-	}
+	errChan, done := make(chan error), make(chan struct{})
+	go func() {
+		globalCache.perUserID[userID].bufStream <- boldHTMLMsg("Starting all of those 3 members in default cluster group")
+		if err := cs.StartAll(); err != nil {
+			errChan <- err
+			return
+		}
+		done <- struct{}{}
+	}()
 
 	select {
+	case err := <-errChan:
+		globalCache.perUserID[userID].bufStream <- fmt.Sprintf("[cluster - error] %+v", err)
+	case <-done:
+		globalCache.perUserID[userID].bufStream <- boldHTMLMsg("Cluster done!")
 	case <-globalCache.perUserID[userID].donec:
 		globalCache.perUserID[userID].bufStream <- boldHTMLMsg("Cluster done!")
-		return
 	case <-time.After(globalFlag.Timeout):
 		globalCache.perUserID[userID].bufStream <- boldHTMLMsg("Cluster time out!")
-		return
 	}
 }
 
@@ -315,7 +326,7 @@ func startStressHandler(ctx context.Context, w http.ResponseWriter, req *http.Re
 
 		// TODO: print out readable k-v
 		if err := cs.SimpleStress(os.Stdout, run.ToHTML, nameToStress); err != nil {
-			fmt.Printf("exiting with: %+v\n", err)
+			fmt.Fprintln(w, boldHTMLMsg(fmt.Sprintf("exiting with: %v", err)))
 			return err
 		}
 

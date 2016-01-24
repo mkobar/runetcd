@@ -51,7 +51,7 @@ func withUserCache(h ContextHandler) ContextHandler {
 			globalCache.perUserID[userID] = &userData{
 				upgrader: &websocket.Upgrader{},
 				cluster:  nil,
-				donec:    make(chan struct{}),
+				donec:    make(chan struct{}, 10),
 
 				bufStream: make(chan string, 5000),
 
