@@ -1,6 +1,10 @@
 ## runetcd [![Build Status](https://img.shields.io/travis/gophergala2016/runetcd.svg?style=flat-square)](https://travis-ci.org/gophergala2016/runetcd) [![Godoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://godoc.org/github.com/gophergala2016/runetcd)
 
-runetcd runs, demos [`etcd`](https://github.com/coreos/etcd) with CLIs and dashboards.
+<br>
+**Distributed Reliable Key-Value Store Visualized**
+<br>
+
+`runetcd` runs, demos [`etcd`](https://github.com/coreos/etcd) with CLIs and dashboards.
 
 - [Why](#why)
 - [**_10-second Demo_**](#10-second-demo)
