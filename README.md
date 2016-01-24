@@ -81,7 +81,7 @@ You can use this as an `etcd` dashboard:
 <br><br><br>
 ##### Sun January 24 2016 10:31 AM
 
-Outlines dashboard frontend.
+Outlined dashboard frontend.
 
 ![changelogs_06](./changelogs/changelogs_06.png)
 
