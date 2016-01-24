@@ -127,10 +127,11 @@
         }
         $('#start_cluster').click(function(e) {
             // TODO: dynamically change timeout
-            runWithTimeout(receiveStream, 700, 10);
-            runWithTimeout(receiveStream, 10000, 100);
-            runWithTimeout(receiveStream, 30000, 300);
-            runWithTimeout(receiveStream, 50000, 500);
+            runWithTimeout(receiveStream, 500, 20);     // first 10 seconds
+            runWithTimeout(receiveStream, 1000, 120);   // next 2 minutes
+            runWithTimeout(receiveStream, 10000, 300);  // next 5 minutes
+            runWithTimeout(receiveStream, 30000, 500);
+            runWithTimeout(receiveStream, 60000, 700);
             runWithTimeout(receiveStream, 100000, 10000);
         });
 
@@ -155,6 +156,8 @@
                 async: true,
                 dataType: "json",
                 success: function(dataObj) {
+                    console.log(dataObj);
+
                     document.getElementById('etcd1_name').innerHTML = "Name: <b>" + dataObj.Etcd1Name + "</b>";
                     document.getElementById('etcd1_id').innerHTML = "ID: <b>" + dataObj.Etcd1ID + "</b>";
                     if (dataObj.Etcd1State == "StateLeader") {
@@ -202,10 +205,14 @@
                         document.getElementById('etcd3_state_button').className = "btn btn-secondary-outline";
                         document.getElementById('etcd3_state').className = "fa fa-pause-circle";
                     }
+
+                    // graph based on stats!
                 }
             });
         }
         $('#start_cluster').click(function(e) {
+            runWithTimeout(receiveStats, 1000, 30);    // first 30 seconds
+            runWithTimeout(receiveStats, 5000, 36);    // next 3 minutes
             runWithTimeout(receiveStats, 10000, 1000);
         });
 
