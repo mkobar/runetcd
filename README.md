@@ -89,7 +89,7 @@ Add help page!
 
 and break time...
 
-![breaktime_01](./changelogs/breaktime_01.png)
+![breaktime_00](./changelogs/breaktime_00.jpg)
 
 <br><br><br>
 ##### Sat January 23 2016  11:20 PM
