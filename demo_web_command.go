@@ -355,7 +355,6 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 		globalCache.mu.Unlock()
 
 		if !toRun {
-			fmt.Println("nil... statsHandler")
 			globalCache.perUserID[userID].bufStream <- boldHTMLMsg("Cluster is not ready to provide stats!!!")
 			return nil
 		}
@@ -438,17 +437,17 @@ func metricsHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 		"etcd1",
 		0.0,
 		0.0,
-		"",
+		"0 bytes",
 
 		"etcd2",
 		0.0,
 		0.0,
-		"",
+		"0 bytes",
 
 		"etcd3",
 		0.0,
 		0.0,
-		"",
+		"0 bytes",
 	}
 
 	switch req.Method {
@@ -459,7 +458,6 @@ func metricsHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 		globalCache.mu.Unlock()
 
 		if !toRun {
-			fmt.Println("nil...")
 			if err := json.NewEncoder(w).Encode(emptyResp); err != nil {
 				return err
 			}

@@ -341,7 +341,7 @@
                                     var x = (new Date()).getTime();
                                     series1.addPoint({
                                         x: x,
-                                        y: dataObj.Etcd1StorageBytes
+                                        y: dataObj.Etcd1StorageBytes,
                                         bytes: dataObj.Etcd1StorageBytesStr
                                     }, true, true);
                                     series2.addPoint({
@@ -384,8 +384,7 @@
                 formatter: function() {
                     return '<b>' + this.series.name + '</b><br/>' +
                         Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
-                        Highcharts.numberFormat(this.y, 2) + '<br/>' +
-                        "(" + this.bytes + ")";
+                        Highcharts.numberFormat(this.y, 2) + " (" + this.point.options.bytes + ")";
                 }
             },
             legend: {

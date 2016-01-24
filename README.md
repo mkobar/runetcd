@@ -82,25 +82,32 @@ You can use this as an `etcd` dashboard:
 ## Progress
 
 <br><br><br>
+##### 11:20PM Saturday, January 23rd, 2016
+
+Real-time metrics graphs up and running!
+
+![changelogs_03](./changelogs/changelogs_03.png)
+
+<br><br><br>
 ##### 7:17PM Saturday, January 23rd, 2016
 
 Better node status display!
 
-![changelog_02](./changelogs/changelogs_02.png)
+![changelogs_02](./changelogs/changelogs_02.png)
 
 <br><br><br>
 ##### 5:30PM Saturday, January 23rd, 2016
 
 Got some realtime updates, logs up and running!
 
-![changelog_01](./changelogs/changelogs_01.png)
+![changelogs_01](./changelogs/changelogs_01.png)
 
 <br><br><br>
 ##### 3AM Saturday, January 23rd, 2016
 
 CLI demo done!
 
-![changelog_00](./changelogs/changelogs_00.png)
+![changelogs_00](./changelogs/changelogs_00.png)
 
 [↑ top](#runetcd--)
 <br><br>
