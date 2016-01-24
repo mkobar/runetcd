@@ -38,7 +38,7 @@ type (
 		bufStream chan string
 
 		ctlCmd     string
-		ctlHistory []string // TODO: do not store all commands (do it in FIFO)
+		ctlHistory []string
 	}
 )
 
@@ -61,7 +61,7 @@ var (
 	portStart               int32 = 11
 	startClusterMinInterval       = 15 * time.Minute
 
-	nameToStress = "etcd2"
+	nameToPut = "etcd2"
 )
 
 func init() {

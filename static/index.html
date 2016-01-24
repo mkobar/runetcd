@@ -372,7 +372,7 @@
             },
             yAxis: {
                 title: {
-                    text: 'bytes'
+                    text: 'Bytes'
                 },
                 plotLines: [{
                     value: 0,
@@ -384,7 +384,7 @@
                 formatter: function() {
                     return '<b>' + this.series.name + '</b><br/>' +
                         Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
-                        Highcharts.numberFormat(this.y, 2) + " (" + this.point.options.bytes + ")";
+                        Highcharts.numberFormat(this.y, 2) + " (" + this.point.bytes + ")";
                 }
             },
             legend: {
@@ -403,7 +403,8 @@
                     for (i = -19; i <= 0; i += 1) {
                         data.push({
                             x: time + i * 5000,
-                            y: 0
+                            y: 0,
+                            bytes: "0 bytes"
                         });
                     }
                     return data;
@@ -418,7 +419,8 @@
                     for (i = -19; i <= 0; i += 1) {
                         data.push({
                             x: time + i * 5000,
-                            y: 0
+                            y: 0,
+                            bytes: "0 bytes"
                         });
                     }
                     return data;
@@ -433,7 +435,8 @@
                     for (i = -19; i <= 0; i += 1) {
                         data.push({
                             x: time + i * 5000,
-                            y: 0
+                            y: 0,
+                            bytes: "0 bytes"
                         });
                     }
                     return data;
@@ -890,8 +893,8 @@
     .ui-menu-item {
         width: 100%;
         height: 100%;
-        font-family: "Trebuchet MS", "Helvetica", "Arial", "Verdana", "sans-serif";
-        font-size: 25px;
+        font-family: "Lucida Console", Courier, monospace;
+        font-size: 12px;
     }
     
     #log_box {
@@ -1064,7 +1067,7 @@
                             margin: auto;
                             vertical-align: center;
                         }
-
+                        
                         .tg .tg-2 {
                             padding-left: 10px;
                             padding-right: 7px;

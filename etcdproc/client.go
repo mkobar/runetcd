@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -14,7 +13,7 @@ import (
 
 	"github.com/coreos/etcd/Godeps/_workspace/src/golang.org/x/net/context"
 	"github.com/coreos/etcd/Godeps/_workspace/src/google.golang.org/grpc"
-	"github.com/coreos/etcd/etcdserver/etcdserverpb"
+	pb "github.com/coreos/etcd/etcdserver/etcdserverpb"
 )
 
 func mustCreateConn(endpoint string) *grpc.ClientConn {
@@ -27,82 +26,174 @@ func mustCreateConn(endpoint string) *grpc.ClientConn {
 }
 
 // Put puts key-value.
-func (c *Cluster) Put(
-
-	w io.Writer,
-	name string,
-
-	key []byte,
-	val []byte,
-
-) error {
-
+func (c *Cluster) Put(key []byte, val []byte) error {
 	endpoint := ""
-	if nd, ok := c.NameToNode[name]; !ok {
-		return fmt.Errorf("%s does not exist in the Cluster!", name)
-	} else {
-		if nd.Flags.ExperimentalgRPCAddr == "" {
-			return fmt.Errorf("no experimental-gRPC-addr found for %s", name)
+	var nd *Node
+	for _, node := range c.NameToNode {
+		if node.Flags.ExperimentalgRPCAddr != "" && !node.Terminated {
+			endpoint = node.Flags.ExperimentalgRPCAddr
+			nd = node
+			break
 		}
-		endpoint = nd.Flags.ExperimentalgRPCAddr
+	}
+	if endpoint == "" || nd == nil {
+		return fmt.Errorf("no experimental-gRPC found")
+	}
+
+	switch nd.outputOption {
+	case ToTerminal:
+		fmt.Fprintf(nd.w, "[Put] Started! (name: %s, endpoint: %s)\n", nd.Flags.Name, endpoint)
+	case ToHTML:
+		nd.BufferStream <- fmt.Sprintf("[Put] Started! (name: %s, endpoint: %s)", nd.Flags.Name, endpoint)
+		if f, ok := nd.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
 	}
 
 	conn := mustCreateConn(endpoint)
-	client := etcdserverpb.NewKVClient(conn)
-
-	r := &etcdserverpb.PutRequest{
+	kvc := pb.NewKVClient(conn)
+	req := &pb.PutRequest{
 		Key:   key,
 		Value: val,
 	}
 
-	fmt.Fprintf(w, "[Put] Started! (endpoint: %s)\n", endpoint)
-
-	ts := time.Now()
-	if _, err := client.Put(context.Background(), r); err != nil {
+	st := time.Now()
+	if _, err := kvc.Put(context.Background(), req); err != nil {
 		return err
 	}
 
 	nk := string(key)
-	if len(key) > 5 {
-		nk = nk[:5] + "..."
+	printLimit := 15
+	if len(key) > printLimit {
+		nk = nk[:printLimit] + "..."
 	}
 	nv := string(val)
-	if len(val) > 5 {
-		nv = nv[:5] + "..."
+	if len(val) > printLimit {
+		nv = nv[:printLimit] + "..."
 	}
-	fmt.Fprintf(w, "[Put] Done! Took %v for %s/%s (endpoint: %s).\n", time.Since(ts), nk, nv, endpoint)
-	fmt.Fprintf(w, "\n")
+
+	switch nd.outputOption {
+	case ToTerminal:
+		fmt.Fprintf(nd.w, "[Put] %s : %s / Took %v (name: %s, endpoint: %s)\n", nk, nv, time.Since(st), nd.Flags.Name, endpoint)
+	case ToHTML:
+		nd.BufferStream <- fmt.Sprintf("[Put] %s : %s / Took %v (name: %s, endpoint: %s)", nk, nv, time.Since(st), nd.Flags.Name, endpoint)
+		if f, ok := nd.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
 
 	return nil
 }
 
-// Stress generates random data and loads them to
-// given node with the name.
-func (c *Cluster) Stress(
-
-	w io.Writer,
-	name string,
-
-	connsN int,
-	clientsN int,
-
-	stressN int,
-	stressKeyN int,
-	stressValN int,
-
-) error {
-
+// Range ranges on the key.
+func (c *Cluster) Range(key []byte) error {
 	endpoint := ""
-	if nd, ok := c.NameToNode[name]; !ok {
-		return fmt.Errorf("%s does not exist in the Cluster!", name)
-	} else {
-		if nd.Flags.ExperimentalgRPCAddr == "" {
-			return fmt.Errorf("no experimental-gRPC-addr found for %s", name)
+	var nd *Node
+	for _, node := range c.NameToNode {
+		if node.Flags.ExperimentalgRPCAddr != "" && !node.Terminated {
+			endpoint = node.Flags.ExperimentalgRPCAddr
+			nd = node
+			break
 		}
-		endpoint = nd.Flags.ExperimentalgRPCAddr
+	}
+	if endpoint == "" || nd == nil {
+		return fmt.Errorf("no experimental-gRPC found")
 	}
 
-	fmt.Fprintf(w, "[Stress] Started generating %d random data...\n", stressN)
+	switch nd.outputOption {
+	case ToTerminal:
+		fmt.Fprintf(nd.w, "[Range] Started on %s\n", key)
+	case ToHTML:
+		nd.BufferStream <- fmt.Sprintf("[Range] Started on %s", key)
+		if f, ok := nd.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
+
+	rangeStart := key
+	rangeEnd := []byte{}
+	sortByOrder := pb.RangeRequest_ASCEND
+	sortByTarget := pb.RangeRequest_KEY
+	rangeLimit := 0
+
+	conn := mustCreateConn(endpoint)
+	kvc := pb.NewKVClient(conn)
+	req := &pb.RangeRequest{
+		Key:        rangeStart,
+		RangeEnd:   rangeEnd,
+		SortOrder:  sortByOrder,
+		SortTarget: sortByTarget,
+		Limit:      int64(rangeLimit),
+	}
+
+	st := time.Now()
+	resp, err := kvc.Range(context.Background(), req)
+	if err != nil {
+		return err
+	}
+
+	for _, ev := range resp.Kvs {
+		switch nd.outputOption {
+		case ToTerminal:
+			fmt.Fprintf(nd.w, fmt.Sprintf("[Range] %s : %s\n", ev.Key, ev.Value))
+		case ToHTML:
+			nd.BufferStream <- fmt.Sprintf("[Range] %s : %s", ev.Key, ev.Value)
+			if f, ok := nd.w.(http.Flusher); ok {
+				if f != nil {
+					f.Flush()
+				}
+			}
+		}
+	}
+
+	switch nd.outputOption {
+	case ToTerminal:
+		fmt.Fprintf(nd.w, "[Range] Took %v (name: %s, endpoint: %s)\n", time.Since(st), nd.Flags.Name, endpoint)
+	case ToHTML:
+		nd.BufferStream <- fmt.Sprintf("[Range] Took %v (name: %s, endpoint: %s)", time.Since(st), nd.Flags.Name, endpoint)
+		if f, ok := nd.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
+
+	return nil
+}
+
+// Stress generates random data to one selected Node.
+func (c *Cluster) Stress(connsN int, clientsN int, stressN int, stressKeyN int, stressValN int) error {
+	endpoint := ""
+	var nd *Node
+	for _, node := range c.NameToNode {
+		if node.Flags.ExperimentalgRPCAddr != "" && !node.Terminated {
+			endpoint = node.Flags.ExperimentalgRPCAddr
+			nd = node
+			break
+		}
+	}
+	if endpoint == "" || nd == nil {
+		return fmt.Errorf("no experimental-gRPC found")
+	}
+
+	switch nd.outputOption {
+	case ToTerminal:
+		fmt.Fprintf(nd.w, "[Stress] Started generating %d random data to %s\n", stressN, nd.Flags.Name)
+	case ToHTML:
+		nd.BufferStream <- fmt.Sprintf("[Stress] Started generating %d random data to %s", stressN, nd.Flags.Name)
+		if f, ok := nd.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
+
 	sr := time.Now()
 	keys := make([][]byte, stressN)
 	vals := make([][]byte, stressN)
@@ -110,24 +201,45 @@ func (c *Cluster) Stress(
 		keys[i] = RandBytes(stressKeyN)
 		vals[i] = RandBytes(stressValN)
 	}
-	fmt.Fprintf(w, "[Stress] Done with generating %d random data! Took %v\n", stressN, time.Since(sr))
+
+	switch nd.outputOption {
+	case ToTerminal:
+		fmt.Fprintf(nd.w, "[Stress] Done with generating %d random data! Took %v\n", stressN, time.Since(sr))
+	case ToHTML:
+		nd.BufferStream <- fmt.Sprintf("[Stress] Done with generating %d random data! Took %v", stressN, time.Since(sr))
+		if f, ok := nd.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
 
 	conns := make([]*grpc.ClientConn, connsN)
 	for i := range conns {
 		conns[i] = mustCreateConn(endpoint)
 	}
-	clients := make([]etcdserverpb.KVClient, clientsN)
+	clients := make([]pb.KVClient, clientsN)
 	for i := range clients {
-		clients[i] = etcdserverpb.NewKVClient(conns[i%int(connsN)])
+		clients[i] = pb.NewKVClient(conns[i%int(connsN)])
 	}
 
-	fmt.Fprintf(w, "[Stress] Started stressing with GRPC (endpoint %s).\n", endpoint)
+	switch nd.outputOption {
+	case ToTerminal:
+		fmt.Fprintf(nd.w, "[Stress] Started stressing with GRPC (endpoint %s)\n", endpoint)
+	case ToHTML:
+		nd.BufferStream <- fmt.Sprintf("[Stress] Started stressing with GRPC (endpoint %s)", endpoint)
+		if f, ok := nd.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
 
-	requests := make(chan *etcdserverpb.PutRequest, stressN)
+	requests := make(chan *pb.PutRequest, stressN)
 	done, errChan := make(chan struct{}), make(chan error)
 
 	for i := range clients {
-		go func(i int, requests <-chan *etcdserverpb.PutRequest) {
+		go func(i int, requests <-chan *pb.PutRequest) {
 			for r := range requests {
 				if _, err := clients[i].Put(context.Background(), r); err != nil {
 					errChan <- err
@@ -141,7 +253,7 @@ func (c *Cluster) Stress(
 	st := time.Now()
 
 	for i := 0; i < stressN; i++ {
-		r := &etcdserverpb.PutRequest{
+		r := &pb.PutRequest{
 			Key:   keys[i],
 			Value: vals[i],
 		}
@@ -162,35 +274,13 @@ func (c *Cluster) Stress(
 
 	tt := time.Since(st)
 	pt := tt / time.Duration(stressN)
-	fmt.Fprintf(
-		w,
-		"[Stress] Done! Took %v for %d requests(%v per each) with %d connection(s), %d client(s) (endpoint: %s)\n",
-		tt, stressN, pt, connsN, clientsN, endpoint,
-	)
-	fmt.Fprintf(w, "\n")
-	return nil
-}
 
-func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name string) error {
-	endpoint := ""
-	nd, ok := c.NameToNode[name]
-	if !ok {
-		return fmt.Errorf("%s does not exist in the Cluster!", name)
-	} else {
-		if nd.Flags.ExperimentalgRPCAddr == "" {
-			return fmt.Errorf("no experimental-gRPC-addr found for %s", name)
-		}
-		endpoint = nd.Flags.ExperimentalgRPCAddr
-	}
-
-	stressN := 10
-	connsN := 1
-	clientsN := 1
+	rMsg := fmt.Sprintf("[Stress] Done! Took %v for %d requests(%v per each) with %d connection(s), %d client(s) (endpoint: %s)", tt, stressN, pt, connsN, clientsN, endpoint)
 	switch nd.outputOption {
 	case ToTerminal:
-		fmt.Fprintf(nd.w, "[Stress] Started generating %d random data...\n", stressN)
+		fmt.Fprintln(nd.w, rMsg)
 	case ToHTML:
-		nd.BufferStream <- fmt.Sprintf("[Stress] Started generating %d random data to %s", stressN, name)
+		nd.BufferStream <- rMsg
 		if f, ok := nd.w.(http.Flusher); ok {
 			if f != nil {
 				f.Flush()
@@ -198,18 +288,53 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 		}
 	}
 
+	return nil
+}
+
+// SimpleStress generates random data to one selected Node.
+func (c *Cluster) SimpleStress() error {
+	endpoint := ""
+	var nd *Node
+	for _, node := range c.NameToNode {
+		if node.Flags.ExperimentalgRPCAddr != "" && !node.Terminated {
+			endpoint = node.Flags.ExperimentalgRPCAddr
+			nd = node
+			break
+		}
+	}
+	if endpoint == "" || nd == nil {
+		return fmt.Errorf("no experimental-gRPC found")
+	}
+
+	switch nd.outputOption {
+	case ToTerminal:
+		fmt.Fprintf(nd.w, "[SimpleStress] Started generating simple random data to %s\n", nd.Flags.Name)
+	case ToHTML:
+		nd.BufferStream <- fmt.Sprintf("[SimpleStress] Started generating simple random data to %s", nd.Flags.Name)
+		if f, ok := nd.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
+
+	stressN := 10
+	connsN := 1
+	clientsN := 1
+
 	sr := time.Now()
 	keys := make([][]byte, stressN)
 	vals := make([][]byte, stressN)
 	for i := range keys {
 		keys[i] = []byte(fmt.Sprintf("sample_%d_%s", i, RandBytes(5)))
-		vals[i] = []byte(fmt.Sprintf(`{"value": "created at %s"}`, time.Now().String()[:19]))
+		vals[i] = []byte(fmt.Sprintf(`{"value": "created at %d"}`, time.Now().Nanosecond()))
 	}
+
 	switch nd.outputOption {
 	case ToTerminal:
-		fmt.Fprintf(nd.w, "[Stress] Done with generating %d random data! Took %v\n", stressN, time.Since(sr))
+		fmt.Fprintf(nd.w, "[SimpleStress] Done with generating %d random data! Took %v\n", stressN, time.Since(sr))
 	case ToHTML:
-		nd.BufferStream <- fmt.Sprintf("[Stress] Done with generating %d random data! Took %v", stressN, time.Since(sr))
+		nd.BufferStream <- fmt.Sprintf("[SimpleStress] Done with generating %d random data! Took %v", stressN, time.Since(sr))
 		if f, ok := nd.w.(http.Flusher); ok {
 			if f != nil {
 				f.Flush()
@@ -221,16 +346,16 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 	for i := range conns {
 		conns[i] = mustCreateConn(endpoint)
 	}
-	clients := make([]etcdserverpb.KVClient, clientsN)
+	clients := make([]pb.KVClient, clientsN)
 	for i := range clients {
-		clients[i] = etcdserverpb.NewKVClient(conns[i%int(connsN)])
+		clients[i] = pb.NewKVClient(conns[i%int(connsN)])
 	}
 
 	switch nd.outputOption {
 	case ToTerminal:
-		fmt.Fprintf(nd.w, "[Stress] Started stressing with GRPC (endpoint %s)\n", endpoint)
+		fmt.Fprintf(nd.w, "[SimpleStress] Started stressing with GRPC (endpoint %s)\n", endpoint)
 	case ToHTML:
-		nd.BufferStream <- fmt.Sprintf("[Stress] Started stressing with GRPC (endpoint %s)", endpoint)
+		nd.BufferStream <- fmt.Sprintf("[SimpleStress] Started stressing with GRPC (endpoint %s)", endpoint)
 		if f, ok := nd.w.(http.Flusher); ok {
 			if f != nil {
 				f.Flush()
@@ -238,11 +363,11 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 		}
 	}
 
-	requests := make(chan *etcdserverpb.PutRequest, stressN)
+	requests := make(chan *pb.PutRequest, stressN)
 	done, errChan := make(chan struct{}), make(chan error)
 
 	for i := range clients {
-		go func(i int, requests <-chan *etcdserverpb.PutRequest) {
+		go func(i int, requests <-chan *pb.PutRequest) {
 			for r := range requests {
 				if _, err := clients[i].Put(context.Background(), r); err != nil {
 					errChan <- err
@@ -250,9 +375,9 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 				}
 				switch nd.outputOption {
 				case ToTerminal:
-					fmt.Fprintf(nd.w, "[PUT] %s / %s\n", r.Key, r.Value)
+					fmt.Fprintf(nd.w, "[SimpleStress PUT] %s : %s\n", r.Key, r.Value)
 				case ToHTML:
-					nd.BufferStream <- fmt.Sprintf("[PUT] %s / %s", r.Key, r.Value)
+					nd.BufferStream <- fmt.Sprintf("[SimpleStress PUT] %s : %s", r.Key, r.Value)
 					if f, ok := nd.w.(http.Flusher); ok {
 						if f != nil {
 							f.Flush()
@@ -267,7 +392,7 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 	st := time.Now()
 
 	for i := 0; i < stressN; i++ {
-		r := &etcdserverpb.PutRequest{
+		r := &pb.PutRequest{
 			Key:   keys[i],
 			Value: vals[i],
 		}
@@ -289,12 +414,12 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 	tt := time.Since(st)
 	pt := tt / time.Duration(stressN)
 	fMsg := fmt.Sprintf(
-		"[Stress] Done! Took %v for %d requests(%v per each) with %d connection(s), %d client(s) (endpoint: %s)",
+		"[SimpleStress] Done! Took %v for %d requests(%v per each) with %d connection(s), %d client(s) (endpoint: %s)",
 		tt, stressN, pt, connsN, clientsN, endpoint,
 	)
 	switch nd.outputOption {
 	case ToTerminal:
-		fmt.Fprintln(w, fMsg)
+		fmt.Fprintln(nd.w, fMsg)
 	case ToHTML:
 		nd.BufferStream <- fMsg
 		if f, ok := nd.w.(http.Flusher); ok {
@@ -309,27 +434,40 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 
 // WatchAndPut watches key and later put that key
 // so that the watcher can return.
-func (c *Cluster) WatchAndPut(w io.Writer, name string, connsN, streamsN, watchersN int) error {
-	keyToWatch := []byte("fo")
+func (c *Cluster) WatchAndPut(connsN, streamsN, watchersN int) error {
 	endpoint := ""
-	if nd, ok := c.NameToNode[name]; !ok {
-		return fmt.Errorf("%s does not exist in the Cluster!", name)
-	} else {
-		if nd.Flags.ExperimentalgRPCAddr == "" {
-			return fmt.Errorf("no experimental-gRPC-addr found for %s", name)
+	var nd *Node
+	for _, node := range c.NameToNode {
+		if node.Flags.ExperimentalgRPCAddr != "" && !node.Terminated {
+			endpoint = node.Flags.ExperimentalgRPCAddr
+			nd = node
+			break
 		}
-		endpoint = nd.Flags.ExperimentalgRPCAddr
 	}
-	fmt.Fprintf(w, "[WatchRequest] Started! (endpoint: %s)\n", endpoint)
+	if endpoint == "" || nd == nil {
+		return fmt.Errorf("no experimental-gRPC found")
+	}
+
+	switch nd.outputOption {
+	case ToTerminal:
+		fmt.Fprintln(nd.w, "[WatchAndPut] Started!")
+	case ToHTML:
+		nd.BufferStream <- "[WatchAndPut] Started!"
+		if f, ok := nd.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
 
 	conns := make([]*grpc.ClientConn, connsN)
 	for i := range conns {
 		conns[i] = mustCreateConn(endpoint)
 	}
 
-	streams := make([]etcdserverpb.Watch_WatchClient, streamsN)
+	streams := make([]pb.Watch_WatchClient, streamsN)
 	for i := range streams {
-		watchClient := etcdserverpb.NewWatchClient(conns[i%int(connsN)])
+		watchClient := pb.NewWatchClient(conns[i%int(connsN)])
 		wStream, err := watchClient.Watch(context.Background())
 		if err != nil {
 			return err
@@ -337,20 +475,42 @@ func (c *Cluster) WatchAndPut(w io.Writer, name string, connsN, streamsN, watche
 		streams[i] = wStream
 	}
 
-	fmt.Fprintf(w, "[WatchRequest] Launching all watchers! (endpoint: %s)\n", endpoint)
+	switch nd.outputOption {
+	case ToTerminal:
+		fmt.Fprintf(nd.w, fmt.Sprintf("[WatchAndPut] Launching all watchers! (name: %s, endpoint: %s)\n", nd.Flags.Name, endpoint))
+	case ToHTML:
+		nd.BufferStream <- fmt.Sprintf("[WatchAndPut] Launching all watchers! (name: %s, endpoint: %s)", nd.Flags.Name, endpoint)
+		if f, ok := nd.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
+
+	keyToWatch := []byte("fo")
 	for i := 0; i < watchersN; i++ {
 		go func(i int) {
 			wStream := streams[i%int(streamsN)]
-			wr := &etcdserverpb.WatchRequest{
-				CreateRequest: &etcdserverpb.WatchCreateRequest{Prefix: keyToWatch},
+			wr := &pb.WatchRequest{
+				CreateRequest: &pb.WatchCreateRequest{Prefix: keyToWatch},
 			}
 			if err := wStream.Send(wr); err != nil {
-				fmt.Fprintf(w, "[wStream.Send] error (%v)\n", err)
+				switch nd.outputOption {
+				case ToTerminal:
+					fmt.Fprintf(nd.w, fmt.Sprintf("[wStream.Send] error (%v)\n", err))
+				case ToHTML:
+					nd.BufferStream <- fmt.Sprintf("[wStream.Send] error (%v)", err)
+					if f, ok := nd.w.(http.Flusher); ok {
+						if f != nil {
+							f.Flush()
+						}
+					}
+				}
 			}
 		}(i)
 	}
 
-	streamsToWatchId := make(map[etcdserverpb.Watch_WatchClient]map[int64]struct{})
+	streamsToWatchId := make(map[pb.Watch_WatchClient]map[int64]struct{})
 	for i := 0; i < watchersN; i++ {
 		wStream := streams[i%int(streamsN)]
 		wresp, err := wStream.Recv()
@@ -358,7 +518,17 @@ func (c *Cluster) WatchAndPut(w io.Writer, name string, connsN, streamsN, watche
 			return err
 		}
 		if !wresp.Created {
-			fmt.Fprintf(w, "[WatchRequest] wresp.Created is supposed to be true! Something wrong (endpoint: %s)\n", endpoint)
+			switch nd.outputOption {
+			case ToTerminal:
+				fmt.Fprintln(nd.w, "[WatchResponse] wresp.Created is supposed to be true! Something wrong!")
+			case ToHTML:
+				nd.BufferStream <- "[WatchResponse] wresp.Created is supposed to be true! Something wrong!"
+				if f, ok := nd.w.(http.Flusher); ok {
+					if f != nil {
+						f.Flush()
+					}
+				}
+			}
 		}
 		if _, ok := streamsToWatchId[wStream]; !ok {
 			streamsToWatchId[wStream] = make(map[int64]struct{})
@@ -366,43 +536,135 @@ func (c *Cluster) WatchAndPut(w io.Writer, name string, connsN, streamsN, watche
 		streamsToWatchId[wStream][wresp.WatchId] = struct{}{}
 	}
 
-	fmt.Fprintln(w, "[PutRequest] trigger notifications with PUT!")
-	kvc := etcdserverpb.NewKVClient(conns[0])
-	if _, err := kvc.Put(context.Background(), &etcdserverpb.PutRequest{Key: []byte("foo"), Value: []byte("bar")}); err != nil {
+	switch nd.outputOption {
+	case ToTerminal:
+		fmt.Fprintln(nd.w, "[PutRequest] Triggering notifications with PUT!")
+	case ToHTML:
+		nd.BufferStream <- "[PutRequest] Triggering notifications with PUT!"
+		if f, ok := nd.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
+
+	kvc := pb.NewKVClient(conns[0])
+	if _, err := kvc.Put(context.Background(), &pb.PutRequest{Key: []byte("foo"), Value: []byte("bar")}); err != nil {
 		return err
 	}
 
-	ts := time.Now()
-	fmt.Fprintf(w, "[Watch] Started! (endpoint: %s)\n", endpoint)
-	fmt.Fprintf(w, "\n")
+	switch nd.outputOption {
+	case ToTerminal:
+		fmt.Fprintln(nd.w, "[Watch] Started!")
+	case ToHTML:
+		nd.BufferStream <- "[Watch] Started!"
+		if f, ok := nd.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
 
+	st := time.Now()
 	var wg sync.WaitGroup
 	wg.Add(watchersN)
+
 	for i := 0; i < watchersN; i++ {
+
 		go func(i int) {
+
 			defer wg.Done()
+
 			wStream := streams[i%int(streamsN)]
 			wresp, err := wStream.Recv()
 			if err != nil {
-				fmt.Fprintf(w, "[Watch] send error (%v)", err)
+				switch nd.outputOption {
+				case ToTerminal:
+					fmt.Fprintf(nd.w, fmt.Sprintf("[Watch] send error (%v)\n", err))
+				case ToHTML:
+					nd.BufferStream <- fmt.Sprintf("[Watch] send error (%v)", err)
+					if f, ok := nd.w.(http.Flusher); ok {
+						if f != nil {
+							f.Flush()
+						}
+					}
+				}
 				return
 			}
+
 			switch {
+
 			case wresp.Created:
-				fmt.Fprintf(w, "[revision] %d / watcher created %08x\n", wresp.Header.Revision, wresp.WatchId)
+				switch nd.outputOption {
+				case ToTerminal:
+					fmt.Fprintf(nd.w, fmt.Sprintf("[Watch revision] %d / watcher created %08x\n", wresp.Header.Revision, wresp.WatchId))
+				case ToHTML:
+					nd.BufferStream <- fmt.Sprintf("[Watch revision] %d / watcher created %08x", wresp.Header.Revision, wresp.WatchId)
+					if f, ok := nd.w.(http.Flusher); ok {
+						if f != nil {
+							f.Flush()
+						}
+					}
+				}
+
 			case wresp.Canceled:
-				fmt.Fprintf(w, "[revision] %d / watcher canceled %08x\n", wresp.Header.Revision, wresp.WatchId)
+				switch nd.outputOption {
+				case ToTerminal:
+					fmt.Fprintf(nd.w, fmt.Sprintf("[Watch revision] %d / watcher canceled %08x\n", wresp.Header.Revision, wresp.WatchId))
+				case ToHTML:
+					nd.BufferStream <- fmt.Sprintf("[Watch revision] %d / watcher canceled %08x", wresp.Header.Revision, wresp.WatchId)
+					if f, ok := nd.w.(http.Flusher); ok {
+						if f != nil {
+							f.Flush()
+						}
+					}
+				}
+
 			default:
-				fmt.Fprintf(w, "[revision] %d\n", wresp.Header.Revision)
+				switch nd.outputOption {
+				case ToTerminal:
+					fmt.Fprintf(nd.w, fmt.Sprintf("[Watch revision] %d\n", wresp.Header.Revision))
+				case ToHTML:
+					nd.BufferStream <- fmt.Sprintf("[Watch revision] %d", wresp.Header.Revision)
+					if f, ok := nd.w.(http.Flusher); ok {
+						if f != nil {
+							f.Flush()
+						}
+					}
+				}
 				for _, ev := range wresp.Events {
-					fmt.Fprintf(w, "%s: %s %s\n", ev.Type, string(ev.Kv.Key), string(ev.Kv.Value))
+					switch nd.outputOption {
+					case ToTerminal:
+						fmt.Fprintf(nd.w, fmt.Sprintf("[%s] %s : %s\n", ev.Type, ev.Kv.Key, ev.Kv.Value))
+					case ToHTML:
+						nd.BufferStream <- fmt.Sprintf("[%s] %s : %s\n", ev.Type, ev.Kv.Key, ev.Kv.Value)
+						if f, ok := nd.w.(http.Flusher); ok {
+							if f != nil {
+								f.Flush()
+							}
+						}
+					}
 				}
 			}
+
 		}(i)
+
 	}
+
 	wg.Wait()
-	fmt.Fprintf(w, "[Watch] Done! Took %v (endpoint: %s)\n", time.Since(ts), endpoint)
-	fmt.Fprintf(w, "\n")
+
+	switch nd.outputOption {
+	case ToTerminal:
+		fmt.Fprintf(nd.w, fmt.Sprintf("[Watch] Done! Took %v!\n", time.Since(st)))
+	case ToHTML:
+		nd.BufferStream <- fmt.Sprintf("[Watch] Done! Took %v!", time.Since(st))
+		if f, ok := nd.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
+
 	return nil
 }
 

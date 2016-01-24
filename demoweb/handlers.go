@@ -204,9 +204,8 @@ func startStressHandler(ctx context.Context, w http.ResponseWriter, req *http.Re
 	switch req.Method {
 	case "GET":
 
-		toRun := false
 		globalCache.mu.Lock()
-		toRun = globalCache.perUserID[userID].cluster != nil
+		toRun := globalCache.perUserID[userID].cluster != nil
 		globalCache.mu.Unlock()
 
 		if !toRun {
@@ -218,8 +217,7 @@ func startStressHandler(ctx context.Context, w http.ResponseWriter, req *http.Re
 		cs := globalCache.perUserID[userID].cluster
 		globalCache.mu.Unlock()
 
-		// TODO: print out readable k-v
-		if err := cs.SimpleStress(os.Stdout, etcdproc.ToHTML, nameToStress); err != nil {
+		if err := cs.SimpleStress(); err != nil {
 			fmt.Fprintln(w, boldHTMLMsg(fmt.Sprintf("exiting with: %v", err)))
 			return err
 		}
@@ -239,9 +237,8 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 
 	switch req.Method {
 	case "GET":
-		toRun := false
 		globalCache.mu.Lock()
-		toRun = globalCache.perUserID[userID].cluster != nil
+		toRun := globalCache.perUserID[userID].cluster != nil
 		globalCache.mu.Unlock()
 
 		if !toRun {
@@ -342,9 +339,8 @@ func metricsHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 
 	switch req.Method {
 	case "GET":
-		toRun := false
 		globalCache.mu.Lock()
-		toRun = globalCache.perUserID[userID].cluster != nil
+		toRun := globalCache.perUserID[userID].cluster != nil
 		globalCache.mu.Unlock()
 
 		if !toRun {
@@ -358,6 +354,7 @@ func metricsHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 		cs := globalCache.perUserID[userID].cluster
 		nameToMetrics, err := cs.GetMetrics()
 		globalCache.mu.Unlock()
+
 		if err != nil {
 			globalCache.perUserID[userID].bufStream <- boldHTMLMsg(fmt.Sprintf("exiting with: %v", err))
 			if errJ := json.NewEncoder(w).Encode(emptyResp); errJ != nil {
@@ -459,29 +456,68 @@ func ctlHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) e
 		globalCache.mu.Lock()
 		globalCache.perUserID[userID].ctlCmd = cm
 		globalCache.perUserID[userID].ctlHistory = append(globalCache.perUserID[userID].ctlHistory, cm)
+		hs := globalCache.perUserID[userID].ctlHistory
+		if len(hs) > 7 { // FIFO of at most 5 command histories
+			copied := make([]string, 7)
+			copy(copied, hs[:2])
+			copy(copied[2:], hs[3:])
+			hs = copied
+		}
+		globalCache.perUserID[userID].ctlHistory = hs
 		globalCache.mu.Unlock()
 
 	case "GET":
-
-		fmt.Println("ctl get")
-
-		toRun := false
 		globalCache.mu.Lock()
-		toRun = globalCache.perUserID[userID].cluster != nil
+		toRun := globalCache.perUserID[userID].cluster != nil
 		ctlCmd := globalCache.perUserID[userID].ctlCmd
 		globalCache.mu.Unlock()
+
+		if ctlCmd == "" || (!strings.HasPrefix(ctlCmd, "etcdctlv3 put ") && !strings.HasPrefix(ctlCmd, "etcdctlv3 range ")) {
+			fmt.Fprintln(w, boldHTMLMsg(fmt.Sprintf("Invalid command received: '%s'", ctlCmd)))
+			return nil
+		}
+		tmpCmd := strings.Replace(ctlCmd, "etcdctlv3 ", "", -1)
+		cmdKind := strings.Split(tmpCmd, " ")[0]
+		args := strings.Replace(tmpCmd, cmdKind+" ", "", -1)
+		if len(args) == 0 {
+			fmt.Fprintln(w, boldHTMLMsg(fmt.Sprintf("Invalid command received (not enough argument received): '%s'", ctlCmd)))
+			return nil
+		}
+		if strings.HasPrefix(args, `"`) || strings.HasPrefix(args, `'`) {
+			fmt.Fprintln(w, boldHTMLMsg(fmt.Sprintf("Invalid command received (quoted key is not supported yet): '%s'", ctlCmd)))
+			return nil
+		}
 
 		if !toRun {
 			fmt.Fprintln(w, boldHTMLMsg("Cluster is not ready to receive requests!!!"))
 			return nil
 		}
-		if ctlCmd == "" {
-			fmt.Fprintln(w, boldHTMLMsg("Invalid command received!!!"))
-			return nil
-		}
 
-		// TODO: run command here and return the results
-		fmt.Fprintln(w, "<br><b>"+ctlCmd+"</b><br>[result] a b<br><br>")
+		globalCache.mu.Lock()
+		cs := globalCache.perUserID[userID].cluster
+		globalCache.mu.Unlock()
+
+		arg0 := strings.Split(args, " ")[0]
+		switch cmdKind {
+		case "put":
+			arg1 := strings.Replace(args, arg0+" ", "", -1)
+			fmt.Fprintln(w, boldHTMLMsg(ctlCmd))
+			if err := cs.Put([]byte(arg0), []byte(arg1)); err != nil {
+				fmt.Fprintln(w, boldHTMLMsg(fmt.Sprintf("Put error (%v)", err)))
+				return err
+			}
+
+		case "range":
+			if len(strings.Split(arg0, " ")) > 1 {
+				fmt.Fprintln(w, boldHTMLMsg(fmt.Sprintf("Range currently only support 1 argument in runetcd (%s)", ctlCmd)))
+				return nil
+			}
+			fmt.Fprintln(w, boldHTMLMsg(ctlCmd))
+			if err := cs.Range([]byte(arg0)); err != nil {
+				fmt.Fprintln(w, boldHTMLMsg(fmt.Sprintf("Range error (%v)", err)))
+				return err
+			}
+		}
 
 	default:
 		http.Error(w, "Method Not Allowed", 405)
@@ -497,9 +533,8 @@ func killHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) 
 	switch req.Method {
 	case "GET":
 
-		toRun := false
 		globalCache.mu.Lock()
-		toRun = globalCache.perUserID[userID].cluster != nil
+		toRun := globalCache.perUserID[userID].cluster != nil
 		globalCache.mu.Unlock()
 
 		if !toRun {
@@ -531,9 +566,8 @@ func restartHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 	switch req.Method {
 	case "GET":
 
-		toRun := false
 		globalCache.mu.Lock()
-		toRun = globalCache.perUserID[userID].cluster != nil
+		toRun := globalCache.perUserID[userID].cluster != nil
 		globalCache.mu.Unlock()
 
 		if !toRun {

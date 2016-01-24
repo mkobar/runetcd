@@ -11,14 +11,7 @@ import (
 )
 
 // PutV2 puts key-value using V2 API.
-func (c *Cluster) PutV2(
-
-	w io.Writer,
-	key []byte,
-	val []byte,
-
-) error {
-
+func (c *Cluster) PutV2(w io.Writer, key []byte, val []byte) error {
 	endpoints := []string{}
 	for _, nd := range c.NameToNode {
 		for v := range nd.Flags.ListenClientURLs {
@@ -49,13 +42,7 @@ func (c *Cluster) PutV2(
 }
 
 // GetV2 gets the value to the key using V2 API.
-func (c *Cluster) GetV2(
-
-	w io.Writer,
-	key []byte,
-
-) error {
-
+func (c *Cluster) GetV2(w io.Writer, key []byte) error {
 	endpoints := []string{}
 	for _, nd := range c.NameToNode {
 		for v := range nd.Flags.ListenClientURLs {

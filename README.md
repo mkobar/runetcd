@@ -75,14 +75,22 @@ You can use this as an `etcd` dashboard:
 
 ## Progress
 
-##### Sun January 24 2016 02:50 AM 
+<br><br><br>
+##### Sun January 24 2016 05:02 AM
+
+Added `etcdctlv3` interface!
+
+![changelogs_05](./changelogs/changelogs_05.png)
+
+<br><br><br>
+##### Sun January 24 2016 02:50 AM
 
 Re-organize packages.
 
 ![changelogs_04](./changelogs/changelogs_04.png)
 
 <br><br><br>
-##### Sun January 24 2016 00:07 AM 
+##### Sun January 24 2016 00:07 AM
 
 Add help page!
 
@@ -114,7 +122,7 @@ Got some realtime updates, logs up and running!
 ![changelogs_01](./changelogs/changelogs_01.png)
 
 <br><br><br>
-##### Sat January 23, 2016 03:15 AM 
+##### Sat January 23, 2016 03:15 AM
 
 CLI demo done!
 

@@ -42,10 +42,6 @@ var (
 	globalPorts = ss.NewPorts()
 
 	nameToTerminate = "etcd1"
-	nameToStress    = "etcd2"
-
-	stressKeyN = 5
-	stressValN = 5
 
 	certPath       = "testcerts/cert.pem" // signed key-pair
 	privateKeyPath = "testcerts/key.pem"  // signed key-pair
@@ -146,7 +142,7 @@ func CommandFunc(cmd *cobra.Command, args []string) {
 
 			time.Sleep(cmdFlag.Pause)
 			fmt.Fprintf(os.Stdout, "\n")
-			fmt.Fprintln(os.Stdout, "####### Trying to terminate one of the node")
+			fmt.Fprintln(os.Stdout, "####### Terminate")
 			if err := c.Terminate(nameToTerminate); err != nil {
 				fmt.Fprintln(os.Stdout, "exiting with:", err)
 				return
@@ -157,34 +153,57 @@ func CommandFunc(cmd *cobra.Command, args []string) {
 
 			time.Sleep(cmdFlag.Pause)
 			fmt.Fprintf(os.Stdout, "\n")
-			fmt.Fprintln(os.Stdout, "####### Trying to restart that node")
+			fmt.Fprintln(os.Stdout, "####### Restart")
 			if err := c.Restart(nameToTerminate); err != nil {
 				fmt.Fprintln(os.Stdout, "exiting with:", err)
 				return
 			}
 
+			key, val := []byte("sample_key"), []byte("sample_value")
 			time.Sleep(cmdFlag.Pause)
 			fmt.Fprintf(os.Stdout, "\n")
-			fmt.Fprintln(os.Stdout, "####### Stressing one node")
-			if err := c.SimpleStress(os.Stdout, etcdproc.ToTerminal, nameToStress); err != nil {
-				// if err := c.Stress(os.Stdout, nameToStress, cmdFlag.ConnectionNumber, cmdFlag.ClientNumber, cmdFlag.StressNumber, stressKeyN, stressValN); err != nil {
+			fmt.Fprintln(os.Stdout, "####### Put")
+			if err := c.Put(key, val); err != nil {
 				fmt.Fprintln(os.Stdout, "exiting with:", err)
 				return
 			}
 
 			time.Sleep(cmdFlag.Pause)
 			fmt.Fprintf(os.Stdout, "\n")
-			fmt.Fprintln(os.Stdout, "####### Watch and Put")
-			if err := c.WatchAndPut(os.Stdout, nameToStress, cmdFlag.ConnectionNumber, cmdFlag.ClientNumber, cmdFlag.StressNumber); err != nil {
+			fmt.Fprintln(os.Stdout, "####### Range")
+			if err := c.Range(key); err != nil {
 				fmt.Fprintln(os.Stdout, "exiting with:", err)
 				return
 			}
 
-			// TODO: not working for now
-			if !cmdFlag.IsClientTLS {
+			time.Sleep(cmdFlag.Pause)
+			fmt.Fprintf(os.Stdout, "\n")
+			fmt.Fprintln(os.Stdout, "####### Stress")
+			if err := c.Stress(cmdFlag.ConnectionNumber, cmdFlag.ClientNumber, cmdFlag.StressNumber, 15, 15); err != nil {
+				fmt.Fprintln(os.Stdout, "exiting with:", err)
+				return
+			}
+
+			time.Sleep(cmdFlag.Pause)
+			fmt.Fprintf(os.Stdout, "\n")
+			fmt.Fprintln(os.Stdout, "####### SimpleStress")
+			if err := c.SimpleStress(); err != nil {
+				fmt.Fprintln(os.Stdout, "exiting with:", err)
+				return
+			}
+
+			time.Sleep(cmdFlag.Pause)
+			fmt.Fprintf(os.Stdout, "\n")
+			fmt.Fprintln(os.Stdout, "####### WatchAndPut")
+			if err := c.WatchAndPut(cmdFlag.ConnectionNumber, cmdFlag.ClientNumber, cmdFlag.StressNumber); err != nil {
+				fmt.Fprintln(os.Stdout, "exiting with:", err)
+				return
+			}
+
+			if !cmdFlag.IsClientTLS { // TODO: not working for now
 				time.Sleep(cmdFlag.Pause)
 				fmt.Fprintf(os.Stdout, "\n")
-				fmt.Fprintln(os.Stdout, "####### Stats")
+				fmt.Fprintln(os.Stdout, "####### GetStats")
 				if vm, err := c.GetStats(); err != nil {
 					fmt.Fprintln(os.Stdout, "exiting with:", err)
 					return
@@ -194,7 +213,7 @@ func CommandFunc(cmd *cobra.Command, args []string) {
 
 				time.Sleep(cmdFlag.Pause)
 				fmt.Fprintf(os.Stdout, "\n")
-				fmt.Fprintln(os.Stdout, "####### Metrics")
+				fmt.Fprintln(os.Stdout, "####### GetMetrics")
 				if vm, err := c.GetMetrics(); err != nil {
 					fmt.Fprintln(os.Stdout, "exiting with:", err)
 					return
@@ -215,19 +234,13 @@ func CommandFunc(cmd *cobra.Command, args []string) {
 
 	select {
 	case <-clusterDone:
-		fmt.Fprintf(os.Stdout, "\n")
 		fmt.Fprintln(os.Stdout, "[demo.CommandFunc END] etcd cluster terminated!")
-		fmt.Fprintf(os.Stdout, "\n")
 		return
 	case <-operationDone:
-		fmt.Fprintf(os.Stdout, "\n")
 		fmt.Fprintln(os.Stdout, "[demo.CommandFunc END] operation terminated!")
-		fmt.Fprintf(os.Stdout, "\n")
 		return
 	case <-time.After(cmdFlag.Timeout):
-		fmt.Fprintf(os.Stdout, "\n")
 		fmt.Fprintln(os.Stdout, "[demo.CommandFunc END] timed out!")
-		fmt.Fprintf(os.Stdout, "\n")
 		return
 	}
 }
