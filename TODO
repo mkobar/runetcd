@@ -25,3 +25,4 @@
 - statik for html, javascript dependencies
 - deploy to public
 - README, demo
+- deploy with kubernetes, rkt, docker, quay
