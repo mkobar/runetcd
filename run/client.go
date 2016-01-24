@@ -172,7 +172,6 @@ func (c *Cluster) Stress(
 }
 
 func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name string) error {
-
 	endpoint := ""
 	m, ok := c.NameToMember[name]
 	if !ok {
@@ -203,7 +202,7 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 	keys := make([][]byte, stressN)
 	vals := make([][]byte, stressN)
 	for i := range keys {
-		keys[i] = []byte(fmt.Sprintf("sample_%d", i))
+		keys[i] = []byte(fmt.Sprintf("sample_%d_%s", i, RandBytes(5)))
 		vals[i] = []byte(fmt.Sprintf(`{"value": "created at %s"}`, time.Now().String()[:19]))
 	}
 	switch m.outputOption {
@@ -253,7 +252,7 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 				case ToTerminal:
 					fmt.Fprintf(m.w, "[PUT] %s / %s\n", r.Key, r.Value)
 				case ToHTML:
-					m.BufferStream <- fmt.Sprintf("[Stress - PUT] %s / %s", r.Key, r.Value)
+					m.BufferStream <- fmt.Sprintf("[PUT] %s / %s", r.Key, r.Value)
 					if f, ok := m.w.(http.Flusher); ok {
 						if f != nil {
 							f.Flush()

@@ -34,20 +34,23 @@ So must `etcd` be easy to try and play.
 Public demo here https://runetcd.io.
 
 ```
-
+gif...
 ```
 
 It runs exactly the same `etcd` cluster as in production. Each client launches
-N number of machines and writes to the distributed database. `runetcd.io` has
-limits on resources that can be used. To experience full-powered `etcd`, please
-run CLI locally. `runetcd` runs executable `etcd` binaries. Make sure to have them
-ready in your local machine. And here's how:
+N number of machines and writes to the distributed database.
+
+Distributed database does A LOT OF RPC calls. So it's very easy to overload
+`runetcd.io`, even though it has resources limits that can be used. To
+experience full-powered `etcd`, PLEASE run CLI locally. And here's how:
+
+```
+commands...
 
 ```
 
-```
-
-It's that easy! Just binary, nothing else.
+It's that easy! Just etcd binary, nothing else. You don't even need Internet
+connection.
 
 [↑ top](#runetcd--)
 <br><br>

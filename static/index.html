@@ -64,92 +64,20 @@
             appendLog($("<div><b>browser does not support WebSocket</b></div>"))
         }
 
-        // var eventStream = new EventSource('/stream')
-        // eventStream.onopen = function(ev) {
-        //     console.log("connected to", ev.target.url);
-        // };
-        // eventStream.onmessage = function(ev) {
-        //     conn.send(ev.data);
-        //     // appendLog(ev.data);
-        // };
-        // eventStream.addEventListener('stream_log', function(ev) {
-        //     // conn.send(ev.data);
-        //     appendLog(ev.data);
-        // });
-
-        // setInterval(function() {
-        //     $.ajax({
-        //         url: '/stream',
-        //         success: function(ev) {
-        //             conn.send(ev);
-        //             // appendLog(ev);
-        //         }
-        //     });
-        // }, 1000);
-
-        // setInterval(function() {
-        //     $.ajax({
-        //         url: '/stream',
-        //         dataType: "json",
-        //         success: function(ev) {
-        //             if (ev.Size > 0) {
-        //                 conn.send(ev.Value);
-        //                 // appendLog(ev.Value); 
-        //             }
-        //         }
-        //     });
-        // }, 1000);
-
-        $('#start_cluster').click(function(e) {
-            e.preventDefault();
-            $.ajax({
-                type: "GET",
-                url: "/start_cluster",
-                async: true,
-                dataType: "html",
-                success: function(dataObj) {
-                    // conn.send(dataObj);
-                    appendLog(dataObj);
-                }
-            });
-        });
         var receiveStream = function() {
             $.ajax({
                 url: '/stream',
                 dataType: "json",
-                success: function(ev) {
-                    if (ev.Size > 0) {
-                        // conn.send(ev.Logs);
-                        appendLog(ev.Logs);
+                success: function(dataObj) {
+                    if (dataObj.Size > 0) {
+                        // conn.send(dataObj.Logs);
+                        appendLog(dataObj.Logs);
                     }
                 }
             });
         }
-        $('#start_cluster').click(function(e) {
-            // TODO: dynamically change timeout
-            runWithTimeout(receiveStream, 500, 20);     // first 10 seconds
-            runWithTimeout(receiveStream, 5000, 24);   // next 2 minutes
-            runWithTimeout(receiveStream, 10000, 300);  // next 5 minutes
-            runWithTimeout(receiveStream, 30000, 500);
-            runWithTimeout(receiveStream, 60000, 700);
-            runWithTimeout(receiveStream, 100000, 10000);
-        });
 
-        $('#start_stress').click(function(e) {
-            e.preventDefault();
-            $.ajax({
-                type: "GET",
-                url: "/start_stress",
-                async: true,
-                dataType: "html",
-                success: function(dataObj) {
-                    // conn.send(dataObj);
-                    appendLog(dataObj);
-                }
-            });
-        });
-
-        var x = 0;
+        var y = 0;
 
         var receiveStats = function() {
             $.ajax({
@@ -158,8 +86,8 @@
                 async: true,
                 dataType: "json",
                 success: function(dataObj) {
-                    console.log(x, dataObj);
-                    x = x + 1;
+                    console.log(y, dataObj);
+                    y = y + 1;
 
                     document.getElementById('etcd1_name').innerHTML = "Name: <b>" + dataObj.Etcd1Name + "</b>";
                     document.getElementById('etcd1_id').innerHTML = "ID: <b>" + dataObj.Etcd1ID + "</b>";
@@ -222,9 +150,92 @@
                 }
             });
         }
+
+        // var eventStream = new EventSource('/stream')
+        // eventStream.onopen = function(ev) {
+        //     console.log("connected to", ev.target.url);
+        // };
+        // eventStream.onmessage = function(ev) {
+        //     conn.send(ev.data);
+        //     // appendLog(ev.data);
+        // };
+        // eventStream.addEventListener('stream_log', function(ev) {
+        //     // conn.send(ev.data);
+        //     appendLog(ev.data);
+        // });
+
+        // setInterval(function() {
+        //     $.ajax({
+        //         url: '/stream',
+        //         success: function(ev) {
+        //             conn.send(ev);
+        //             // appendLog(ev);
+        //         }
+        //     });
+        // }, 1000);
+
+        // setInterval(function() {
+        //     $.ajax({
+        //         url: '/stream',
+        //         dataType: "json",
+        //         success: function(ev) {
+        //             if (ev.Size > 0) {
+        //                 conn.send(ev.Value);
+        //                 // appendLog(ev.Value); 
+        //             }
+        //         }
+        //     });
+        // }, 1000);
+
         $('#start_cluster').click(function(e) {
-            runWithTimeout(receiveStats, 7000, 36);
+            e.preventDefault();
+            $.ajax({
+                type: "GET",
+                url: "/start_cluster",
+                async: true,
+                dataType: "html",
+                success: function(dataObj) {
+                    // conn.send(dataObj);
+                    appendLog(dataObj);
+                }
+            });
+        });
+        $('#start_cluster').click(function(e) {
+            // TODO: dynamically change timeout
+            runWithTimeout(receiveStream, 100, 1);
+            runWithTimeout(receiveStream, 1000, 1);
+            runWithTimeout(receiveStream, 7000, 24);
+            runWithTimeout(receiveStream, 10000, 300);
+            runWithTimeout(receiveStream, 30000, 500);
+            runWithTimeout(receiveStream, 60000, 700);
+            runWithTimeout(receiveStream, 100000, 10000);
+        });
+        $('#start_cluster').click(function(e) {
+            runWithTimeout(receiveStats, 100, 1);
+            runWithTimeout(receiveStats, 2000, 3);
             runWithTimeout(receiveStats, 10000, 1000);
+        });
+
+        $('#start_stress').click(function(e) {
+            e.preventDefault();
+            $.ajax({
+                type: "GET",
+                url: "/start_stress",
+                async: true,
+                dataType: "html",
+                success: function(dataObj) {
+                    // conn.send(dataObj);
+                    appendLog(dataObj);
+                }
+            });
+        });
+        $('#start_stress').click(function(e) {
+            runWithTimeout(receiveStats, 100, 1);
+            runWithTimeout(receiveStats, 1000, 1);
+            runWithTimeout(receiveStats, 300, 2);
+        });
+        $('#start_stress').click(function(e) {
+            runWithTimeout(receiveStream, 1500, 1);
         });
 
         $("#list_ctl")
@@ -292,6 +303,13 @@
                 }
             });
         });
+        $('#kill_1').click(function(e) {
+            runWithTimeout(receiveStats, 100, 2);
+            runWithTimeout(receiveStats, 500, 1);
+        });
+        $('#kill_1').click(function(e) {
+            runWithTimeout(receiveStream, 700, 1);
+        });
 
         $('#restart_1').click(function(e) {
             e.preventDefault();
@@ -305,6 +323,13 @@
                     appendLog(dataObj);
                 }
             });
+        });
+        $('#restart_1').click(function(e) {
+            runWithTimeout(receiveStats, 100, 2);
+            runWithTimeout(receiveStats, 500, 1);
+        });
+        $('#restart_1').click(function(e) {
+            runWithTimeout(receiveStream, 700, 1);
         });
 
         $('#kill_2').click(function(e) {
@@ -320,6 +345,13 @@
                 }
             });
         });
+        $('#kill_2').click(function(e) {
+            runWithTimeout(receiveStats, 100, 2);
+            runWithTimeout(receiveStats, 500, 1);
+        });
+        $('#kill_2').click(function(e) {
+            runWithTimeout(receiveStream, 700, 1);
+        });
 
         $('#restart_2').click(function(e) {
             e.preventDefault();
@@ -333,6 +365,13 @@
                     appendLog(dataObj);
                 }
             });
+        });
+        $('#restart_2').click(function(e) {
+            runWithTimeout(receiveStats, 100, 2);
+            runWithTimeout(receiveStats, 500, 1);
+        });
+        $('#restart_2').click(function(e) {
+            runWithTimeout(receiveStream, 700, 1);
         });
 
         $('#kill_3').click(function(e) {
@@ -348,6 +387,13 @@
                 }
             });
         });
+        $('#kill_3').click(function(e) {
+            runWithTimeout(receiveStats, 100, 2);
+            runWithTimeout(receiveStats, 500, 1);
+        });
+        $('#kill_3').click(function(e) {
+            runWithTimeout(receiveStream, 700, 1);
+        });
 
         $('#restart_3').click(function(e) {
             e.preventDefault();
@@ -362,7 +408,13 @@
                 }
             });
         });
-
+        $('#restart_3').click(function(e) {
+            runWithTimeout(receiveStats, 100, 2);
+            runWithTimeout(receiveStats, 500, 1);
+        });
+        $('#restart_3').click(function(e) {
+            runWithTimeout(receiveStream, 700, 1);
+        });
     });
     </script>
     <style>
