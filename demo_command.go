@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
-	"github.com/gophergala2016/runetcd/run"
+	"github.com/gophergala2016/runetcd/etcdproc"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 )
@@ -24,9 +24,9 @@ func runDemoTerminal(writer io.Writer, isSimple, isClientTLS, isPeerTLS bool, ce
 		}
 	}()
 
-	fs := make([]*run.Flags, globalFlag.ClusterSize)
+	fs := make([]*etcdproc.Flags, globalFlag.ClusterSize)
 	for i := range fs {
-		df, err := run.NewFlags(fmt.Sprintf("etcd%d", i+1), globalPorts, 11+i, "etcd-cluster-token", "new", uuid.NewV4().String(), isClientTLS, isPeerTLS, certPath, privateKeyPath, caPath)
+		df, err := etcdproc.NewFlags(fmt.Sprintf("etcd%d", i+1), globalPorts, 11+i, "etcd-cluster-token", "new", uuid.NewV4().String(), isClientTLS, isPeerTLS, certPath, privateKeyPath, caPath)
 		if err != nil {
 			fmt.Fprintln(writer, "exiting with:", err)
 			return
@@ -34,7 +34,7 @@ func runDemoTerminal(writer io.Writer, isSimple, isClientTLS, isPeerTLS bool, ce
 		fs[i] = df
 	}
 
-	c, err := run.CreateCluster(writer, nil, run.ToTerminal, globalFlag.EtcdBinary, fs...)
+	c, err := etcdproc.CreateCluster(writer, nil, etcdproc.ToTerminal, globalFlag.EtcdBinary, fs...)
 	if err != nil {
 		fmt.Fprintln(writer, "exiting with:", err)
 		return
@@ -54,7 +54,7 @@ func runDemoTerminal(writer io.Writer, isSimple, isClientTLS, isPeerTLS bool, ce
 	defer c.RemoveAllDataDirs()
 
 	fmt.Fprintf(writer, "\n")
-	fmt.Fprintln(writer, "####### Starting all of those 3 members in default cluster group")
+	fmt.Fprintln(writer, "####### Starting all of those 3 nodes in default cluster group")
 	clusterDone := make(chan struct{})
 	go func() {
 		defer func() {
@@ -75,18 +75,18 @@ func runDemoTerminal(writer io.Writer, isSimple, isClientTLS, isPeerTLS bool, ce
 
 			time.Sleep(globalFlag.DemoPause)
 			fmt.Fprintf(writer, "\n")
-			fmt.Fprintln(writer, "####### Trying to terminate one of the member")
+			fmt.Fprintln(writer, "####### Trying to terminate one of the node")
 			if err := c.Terminate(nameToTerminate); err != nil {
 				fmt.Fprintln(writer, "exiting with:", err)
 				return
 			}
 
 			// Stress here to trigger log compaction
-			// (make terminated member fall behind)
+			// (make terminated node fall behind)
 
 			time.Sleep(globalFlag.DemoPause)
 			fmt.Fprintf(writer, "\n")
-			fmt.Fprintln(writer, "####### Trying to restart that member")
+			fmt.Fprintln(writer, "####### Trying to restart that node")
 			if err := c.Restart(nameToTerminate); err != nil {
 				fmt.Fprintln(writer, "exiting with:", err)
 				return
@@ -94,8 +94,8 @@ func runDemoTerminal(writer io.Writer, isSimple, isClientTLS, isPeerTLS bool, ce
 
 			time.Sleep(globalFlag.DemoPause)
 			fmt.Fprintf(writer, "\n")
-			fmt.Fprintln(writer, "####### Stressing one member")
-			if err := c.SimpleStress(writer, run.ToTerminal, nameToStress); err != nil {
+			fmt.Fprintln(writer, "####### Stressing one node")
+			if err := c.SimpleStress(writer, etcdproc.ToTerminal, nameToStress); err != nil {
 				// if err := c.Stress(writer, nameToStress, globalFlag.DemoConnectionNumber, globalFlag.DemoClientNumber, globalFlag.DemoStressNumber, stressKeyN, stressValN); err != nil {
 				fmt.Fprintln(writer, "exiting with:", err)
 				return

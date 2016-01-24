@@ -1,4 +1,4 @@
-package run
+package etcdproc
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 
 // Flags is a set of etcd flags.
 type Flags struct {
-	// Name is a name for an etcd member.
+	// Name is a name for an etcd node.
 	Name string `flag:"name"`
 
 	// ExperimentalV3Demo is either 'true' or 'false'.
@@ -30,7 +30,7 @@ type Flags struct {
 	// 'http://localhost:2379,http://localhost:4001'.
 	ListenClientURLs map[string]struct{} `flag:"listen-client-urls"`
 
-	// AdvertiseClientURLs is a list of this member's client URLs
+	// AdvertiseClientURLs is a list of this node's client URLs
 	// to advertise to the public. The client URLs advertised should
 	// be accessible to machines that talk to etcd cluster. etcd client
 	// libraries parse these URLs to connect to the cluster.
@@ -45,14 +45,14 @@ type Flags struct {
 	// 'http://localhost:2380,http://localhost:7001'.
 	ListenPeerURLs map[string]struct{} `flag:"listen-peer-urls"`
 
-	// InitialAdvertisePeerURLs is URL to advertise to other members
-	// in the cluster, used to communicate between members.
+	// InitialAdvertisePeerURLs is URL to advertise to other nodes
+	// in the cluster, used to communicate between nodes.
 	// It is usually composed of scheme, host, and port '*80'.
 	// Default values are
 	// 'http://localhost:2380,http://localhost:7001'.
 	InitialAdvertisePeerURLs map[string]struct{} `flag:"initial-advertise-peer-urls"`
 
-	// InitialCluster is a map of each member name to its
+	// InitialCluster is a map of each node name to its
 	// InitialAdvertisePeerURLs.
 	InitialCluster map[string]string `flag:"initial-cluster"`
 
@@ -113,7 +113,7 @@ func NewDefaultFlags() *Flags {
 	return fs
 }
 
-// NewFlags returns default flags for an etcd member.
+// NewFlags returns default flags for an etcd node.
 func NewFlags(
 	name string,
 	usedPorts *ss.Ports,
@@ -220,7 +220,7 @@ func CombineFlags(cs ...*Flags) error {
 		if portCheck == "" {
 			portCheck = tp
 		} else if portCheck == tp {
-			return fmt.Errorf("%q has duplicate ports in another member!", f.getAllPorts())
+			return fmt.Errorf("%q has duplicate ports in another node!", f.getAllPorts())
 		}
 		m[f.Name] = mapToCommaString(f.InitialAdvertisePeerURLs)
 	}

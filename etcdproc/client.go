@@ -1,4 +1,4 @@
-package run
+package etcdproc
 
 import (
 	"bufio"
@@ -38,13 +38,13 @@ func (c *Cluster) Put(
 ) error {
 
 	endpoint := ""
-	if m, ok := c.NameToMember[name]; !ok {
+	if nd, ok := c.NameToNode[name]; !ok {
 		return fmt.Errorf("%s does not exist in the Cluster!", name)
 	} else {
-		if m.Flags.ExperimentalgRPCAddr == "" {
+		if nd.Flags.ExperimentalgRPCAddr == "" {
 			return fmt.Errorf("no experimental-gRPC-addr found for %s", name)
 		}
-		endpoint = m.Flags.ExperimentalgRPCAddr
+		endpoint = nd.Flags.ExperimentalgRPCAddr
 	}
 
 	conn := mustCreateConn(endpoint)
@@ -77,7 +77,7 @@ func (c *Cluster) Put(
 }
 
 // Stress generates random data and loads them to
-// given member with the name.
+// given node with the name.
 func (c *Cluster) Stress(
 
 	w io.Writer,
@@ -93,13 +93,13 @@ func (c *Cluster) Stress(
 ) error {
 
 	endpoint := ""
-	if m, ok := c.NameToMember[name]; !ok {
+	if nd, ok := c.NameToNode[name]; !ok {
 		return fmt.Errorf("%s does not exist in the Cluster!", name)
 	} else {
-		if m.Flags.ExperimentalgRPCAddr == "" {
+		if nd.Flags.ExperimentalgRPCAddr == "" {
 			return fmt.Errorf("no experimental-gRPC-addr found for %s", name)
 		}
-		endpoint = m.Flags.ExperimentalgRPCAddr
+		endpoint = nd.Flags.ExperimentalgRPCAddr
 	}
 
 	fmt.Fprintf(w, "[Stress] Started generating %d random data...\n", stressN)
@@ -173,25 +173,25 @@ func (c *Cluster) Stress(
 
 func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name string) error {
 	endpoint := ""
-	m, ok := c.NameToMember[name]
+	nd, ok := c.NameToNode[name]
 	if !ok {
 		return fmt.Errorf("%s does not exist in the Cluster!", name)
 	} else {
-		if m.Flags.ExperimentalgRPCAddr == "" {
+		if nd.Flags.ExperimentalgRPCAddr == "" {
 			return fmt.Errorf("no experimental-gRPC-addr found for %s", name)
 		}
-		endpoint = m.Flags.ExperimentalgRPCAddr
+		endpoint = nd.Flags.ExperimentalgRPCAddr
 	}
 
 	stressN := 10
 	connsN := 1
 	clientsN := 1
-	switch m.outputOption {
+	switch nd.outputOption {
 	case ToTerminal:
-		fmt.Fprintf(m.w, "[Stress] Started generating %d random data...\n", stressN)
+		fmt.Fprintf(nd.w, "[Stress] Started generating %d random data...\n", stressN)
 	case ToHTML:
-		m.BufferStream <- fmt.Sprintf("[Stress] Started generating %d random data to %s", stressN, name)
-		if f, ok := m.w.(http.Flusher); ok {
+		nd.BufferStream <- fmt.Sprintf("[Stress] Started generating %d random data to %s", stressN, name)
+		if f, ok := nd.w.(http.Flusher); ok {
 			if f != nil {
 				f.Flush()
 			}
@@ -205,12 +205,12 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 		keys[i] = []byte(fmt.Sprintf("sample_%d_%s", i, RandBytes(5)))
 		vals[i] = []byte(fmt.Sprintf(`{"value": "created at %s"}`, time.Now().String()[:19]))
 	}
-	switch m.outputOption {
+	switch nd.outputOption {
 	case ToTerminal:
-		fmt.Fprintf(m.w, "[Stress] Done with generating %d random data! Took %v\n", stressN, time.Since(sr))
+		fmt.Fprintf(nd.w, "[Stress] Done with generating %d random data! Took %v\n", stressN, time.Since(sr))
 	case ToHTML:
-		m.BufferStream <- fmt.Sprintf("[Stress] Done with generating %d random data! Took %v", stressN, time.Since(sr))
-		if f, ok := m.w.(http.Flusher); ok {
+		nd.BufferStream <- fmt.Sprintf("[Stress] Done with generating %d random data! Took %v", stressN, time.Since(sr))
+		if f, ok := nd.w.(http.Flusher); ok {
 			if f != nil {
 				f.Flush()
 			}
@@ -226,12 +226,12 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 		clients[i] = etcdserverpb.NewKVClient(conns[i%int(connsN)])
 	}
 
-	switch m.outputOption {
+	switch nd.outputOption {
 	case ToTerminal:
-		fmt.Fprintf(m.w, "[Stress] Started stressing with GRPC (endpoint %s)\n", endpoint)
+		fmt.Fprintf(nd.w, "[Stress] Started stressing with GRPC (endpoint %s)\n", endpoint)
 	case ToHTML:
-		m.BufferStream <- fmt.Sprintf("[Stress] Started stressing with GRPC (endpoint %s)", endpoint)
-		if f, ok := m.w.(http.Flusher); ok {
+		nd.BufferStream <- fmt.Sprintf("[Stress] Started stressing with GRPC (endpoint %s)", endpoint)
+		if f, ok := nd.w.(http.Flusher); ok {
 			if f != nil {
 				f.Flush()
 			}
@@ -248,12 +248,12 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 					errChan <- err
 					return
 				}
-				switch m.outputOption {
+				switch nd.outputOption {
 				case ToTerminal:
-					fmt.Fprintf(m.w, "[PUT] %s / %s\n", r.Key, r.Value)
+					fmt.Fprintf(nd.w, "[PUT] %s / %s\n", r.Key, r.Value)
 				case ToHTML:
-					m.BufferStream <- fmt.Sprintf("[PUT] %s / %s", r.Key, r.Value)
-					if f, ok := m.w.(http.Flusher); ok {
+					nd.BufferStream <- fmt.Sprintf("[PUT] %s / %s", r.Key, r.Value)
+					if f, ok := nd.w.(http.Flusher); ok {
 						if f != nil {
 							f.Flush()
 						}
@@ -292,12 +292,12 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 		"[Stress] Done! Took %v for %d requests(%v per each) with %d connection(s), %d client(s) (endpoint: %s)",
 		tt, stressN, pt, connsN, clientsN, endpoint,
 	)
-	switch m.outputOption {
+	switch nd.outputOption {
 	case ToTerminal:
 		fmt.Fprintln(w, fMsg)
 	case ToHTML:
-		m.BufferStream <- fMsg
-		if f, ok := m.w.(http.Flusher); ok {
+		nd.BufferStream <- fMsg
+		if f, ok := nd.w.(http.Flusher); ok {
 			if f != nil {
 				f.Flush()
 			}
@@ -312,15 +312,15 @@ func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name stri
 func (c *Cluster) WatchAndPut(w io.Writer, name string, connsN, streamsN, watchersN int) error {
 	keyToWatch := []byte("fo")
 	endpoint := ""
-	if m, ok := c.NameToMember[name]; !ok {
+	if nd, ok := c.NameToNode[name]; !ok {
 		return fmt.Errorf("%s does not exist in the Cluster!", name)
 	} else {
-		if m.Flags.ExperimentalgRPCAddr == "" {
+		if nd.Flags.ExperimentalgRPCAddr == "" {
 			return fmt.Errorf("no experimental-gRPC-addr found for %s", name)
 		}
-		endpoint = m.Flags.ExperimentalgRPCAddr
+		endpoint = nd.Flags.ExperimentalgRPCAddr
 	}
-	fmt.Fprintf(w, "[Watch-Request] Started! (endpoint: %s)\n", endpoint)
+	fmt.Fprintf(w, "[WatchRequest] Started! (endpoint: %s)\n", endpoint)
 
 	conns := make([]*grpc.ClientConn, connsN)
 	for i := range conns {
@@ -337,7 +337,7 @@ func (c *Cluster) WatchAndPut(w io.Writer, name string, connsN, streamsN, watche
 		streams[i] = wStream
 	}
 
-	fmt.Fprintf(w, "[Watch-Request] Launching all watchers! (endpoint: %s)\n", endpoint)
+	fmt.Fprintf(w, "[WatchRequest] Launching all watchers! (endpoint: %s)\n", endpoint)
 	for i := 0; i < watchersN; i++ {
 		go func(i int) {
 			wStream := streams[i%int(streamsN)]
@@ -345,7 +345,7 @@ func (c *Cluster) WatchAndPut(w io.Writer, name string, connsN, streamsN, watche
 				CreateRequest: &etcdserverpb.WatchCreateRequest{Prefix: keyToWatch},
 			}
 			if err := wStream.Send(wr); err != nil {
-				fmt.Fprintf(w, "[Watch-Send] error (%v)\n", err)
+				fmt.Fprintf(w, "[wStream.Send] error (%v)\n", err)
 			}
 		}(i)
 	}
@@ -358,7 +358,7 @@ func (c *Cluster) WatchAndPut(w io.Writer, name string, connsN, streamsN, watche
 			return err
 		}
 		if !wresp.Created {
-			fmt.Fprintf(w, "[Watch-Request] wresp.Created is supposed to be true! Something wrong (endpoint: %s)\n", endpoint)
+			fmt.Fprintf(w, "[WatchRequest] wresp.Created is supposed to be true! Something wrong (endpoint: %s)\n", endpoint)
 		}
 		if _, ok := streamsToWatchId[wStream]; !ok {
 			streamsToWatchId[wStream] = make(map[int64]struct{})
@@ -366,7 +366,7 @@ func (c *Cluster) WatchAndPut(w io.Writer, name string, connsN, streamsN, watche
 		streamsToWatchId[wStream][wresp.WatchId] = struct{}{}
 	}
 
-	fmt.Fprintln(w, "[Put-Request] trigger notifications with PUT!")
+	fmt.Fprintln(w, "[PutRequest] trigger notifications with PUT!")
 	kvc := etcdserverpb.NewKVClient(conns[0])
 	if _, err := kvc.Put(context.Background(), &etcdserverpb.PutRequest{Key: []byte("foo"), Value: []byte("bar")}); err != nil {
 		return err
@@ -407,7 +407,7 @@ func (c *Cluster) WatchAndPut(w io.Writer, name string, connsN, streamsN, watche
 }
 
 // ServerStats encapsulates various statistics about an EtcdServer and its
-// communication with other members of the cluster.
+// communication with other nodes of the cluster.
 // (https://github.com/coreos/etcd/tree/master/etcdserver/stats)
 type ServerStats struct {
 	Name      string    `json:"name"`
@@ -433,8 +433,8 @@ type ServerStats struct {
 // GetStats returns the leader of the cluster.
 func (c *Cluster) GetStats() (map[string]ServerStats, error) {
 	nameToEndpoint := make(map[string][]string)
-	for n, m := range c.NameToMember {
-		for v := range m.Flags.ListenClientURLs {
+	for n, nd := range c.NameToNode {
+		for v := range nd.Flags.ListenClientURLs {
 			if _, ok := nameToEndpoint[n]; !ok {
 				nameToEndpoint[n] = []string{}
 			}
@@ -481,7 +481,7 @@ func (c *Cluster) GetMetrics() (map[string]map[string]float64, error) {
 		"etcd_storage_db_total_size_in_bytes": 0.0,
 	}
 	nameToEndpoint := make(map[string][]string)
-	for n, m := range c.NameToMember {
+	for n, m := range c.NameToNode {
 		for v := range m.Flags.ListenClientURLs {
 			if _, ok := nameToEndpoint[n]; !ok {
 				nameToEndpoint[n] = []string{}

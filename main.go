@@ -7,6 +7,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/gophergala2016/runetcd/kill"
 	"github.com/gyuho/psn/ss"
 	"github.com/spf13/cobra"
 )
@@ -82,11 +83,6 @@ var (
 		Short: "demo-web demos etcd in a web browser.",
 		Run:   demoWebCommandFunc,
 	}
-	killCommand = &cobra.Command{
-		Use:   "kill",
-		Short: "kill kills etcd.",
-		Run:   killCommandFunc,
-	}
 )
 
 func init() {
@@ -129,7 +125,7 @@ func init() {
 
 	rootCommand.AddCommand(demoCommand)
 	rootCommand.AddCommand(demoWebCommand)
-	rootCommand.AddCommand(killCommand)
+	rootCommand.AddCommand(kill.Command)
 }
 
 func init() {

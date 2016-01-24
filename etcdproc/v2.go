@@ -1,4 +1,4 @@
-package run
+package etcdproc
 
 import (
 	"fmt"
@@ -20,8 +20,8 @@ func (c *Cluster) PutV2(
 ) error {
 
 	endpoints := []string{}
-	for _, m := range c.NameToMember {
-		for v := range m.Flags.ListenClientURLs {
+	for _, nd := range c.NameToNode {
+		for v := range nd.Flags.ListenClientURLs {
 			endpoints = append(endpoints, v)
 		}
 	}
@@ -57,8 +57,8 @@ func (c *Cluster) GetV2(
 ) error {
 
 	endpoints := []string{}
-	for _, m := range c.NameToMember {
-		for v := range m.Flags.ListenClientURLs {
+	for _, nd := range c.NameToNode {
+		for v := range nd.Flags.ListenClientURLs {
 			endpoints = append(endpoints, v)
 		}
 	}

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
-	"github.com/gophergala2016/runetcd/run"
+	"github.com/gophergala2016/runetcd/etcdproc"
 	"github.com/gorilla/websocket"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
@@ -27,16 +27,15 @@ type (
 		perUserID map[string]*userData
 	}
 	userData struct {
-		upgrader *websocket.Upgrader
-
+		upgrader       *websocket.Upgrader
 		clusterStarted time.Time
-		cluster        *run.Cluster
-		donec          chan struct{}
 
+		cluster   *etcdproc.Cluster
+		donec     chan struct{}
 		bufStream chan string
 
 		ctlCmd     string
-		ctlHistory []string
+		ctlHistory []string // TODO: do not store all commands (do it in FIFO)
 	}
 )
 
@@ -143,11 +142,11 @@ func demoWebCommandFunc(cmd *cobra.Command, args []string) {
 
 	mainRouter := http.NewServeMux()
 	mainRouter.Handle("/", http.FileServer(http.Dir("./static")))
+
 	mainRouter.Handle("/ws", &ContextAdapter{
 		ctx:     rootContext,
 		handler: withUserCache(ContextHandlerFunc(wsHandler)),
 	})
-
 	mainRouter.Handle("/stream", &ContextAdapter{
 		ctx:     rootContext,
 		handler: withUserCache(ContextHandlerFunc(streamHandler)),
@@ -191,7 +190,6 @@ func demoWebCommandFunc(cmd *cobra.Command, args []string) {
 		ctx:     rootContext,
 		handler: withUserCache(ContextHandlerFunc(killHandler)),
 	})
-
 	mainRouter.Handle("/restart_1", &ContextAdapter{
 		ctx:     rootContext,
 		handler: withUserCache(ContextHandlerFunc(restartHandler)),
@@ -234,8 +232,8 @@ func startClusterHandler(ctx context.Context, w http.ResponseWriter, req *http.R
 		}
 		globalCache.mu.Unlock()
 		if !toRun {
-			// globalCache.perUserID[userID].bufStream <- boldHTMLMsg(fmt.Sprintf("Limit exceeded (%v since last): Please wait a few minutes or run locally", sub))
-			fmt.Fprintln(w, boldHTMLMsg(fmt.Sprintf("Limit exceeded (%v since last): Please wait a few minutes or run locally", sub)))
+			// globalCache.perUserID[userID].bufStream <- boldHTMLMsg(fmt.Sprintf("Limit exceeded (%v since last)! Please wait a few minutes or run locally!", sub))
+			fmt.Fprintln(w, boldHTMLMsg(fmt.Sprintf("Limit exceeded (%v since last)! Please wait %v or run locally!", sub, startClusterMinInterval)))
 			return nil
 		}
 		go spawnCluster(userID)
@@ -257,9 +255,9 @@ func spawnCluster(userID string) {
 	}()
 
 	portPrefix := atomic.LoadInt32(&portStart)
-	fs := make([]*run.Flags, globalFlag.ClusterSize)
+	fs := make([]*etcdproc.Flags, globalFlag.ClusterSize)
 	for i := range fs {
-		df, err := run.NewFlags(fmt.Sprintf("etcd%d", i+1), globalPorts, int(portPrefix)+i, "etcd-cluster-token", "new", uuid.NewV4().String(), false, false, "", "", "")
+		df, err := etcdproc.NewFlags(fmt.Sprintf("etcd%d", i+1), globalPorts, int(portPrefix)+i, "etcd-cluster-token", "new", uuid.NewV4().String(), false, false, "", "", "")
 		if err != nil {
 			globalCache.perUserID[userID].bufStream <- fmt.Sprintf("[cluster - error] %+v", err)
 			return
@@ -268,7 +266,7 @@ func spawnCluster(userID string) {
 	}
 	atomic.AddInt32(&portStart, 7)
 
-	cs, err := run.CreateCluster(os.Stdout, globalCache.perUserID[userID].bufStream, run.ToHTML, globalFlag.EtcdBinary, fs...)
+	cs, err := etcdproc.CreateCluster(os.Stdout, globalCache.perUserID[userID].bufStream, etcdproc.ToHTML, globalFlag.EtcdBinary, fs...)
 	if err != nil {
 		globalCache.perUserID[userID].bufStream <- fmt.Sprintf("[cluster - error] %+v", err)
 		return
@@ -287,7 +285,7 @@ func spawnCluster(userID string) {
 
 	errChan, done := make(chan error), make(chan struct{})
 	go func() {
-		globalCache.perUserID[userID].bufStream <- boldHTMLMsg("Starting all of those 3 members in default cluster group")
+		globalCache.perUserID[userID].bufStream <- boldHTMLMsg("Starting all of those 3 nodes in default cluster group")
 		if err := cs.StartAll(); err != nil {
 			errChan <- err
 			return
@@ -329,7 +327,7 @@ func startStressHandler(ctx context.Context, w http.ResponseWriter, req *http.Re
 		globalCache.mu.Unlock()
 
 		// TODO: print out readable k-v
-		if err := cs.SimpleStress(os.Stdout, run.ToHTML, nameToStress); err != nil {
+		if err := cs.SimpleStress(os.Stdout, etcdproc.ToHTML, nameToStress); err != nil {
 			fmt.Fprintln(w, boldHTMLMsg(fmt.Sprintf("exiting with: %v", err)))
 			return err
 		}
@@ -374,7 +372,7 @@ func statsHandler(ctx context.Context, w http.ResponseWriter, req *http.Request)
 		}
 		sort.Strings(names)
 		if len(names) != 3 {
-			return fmt.Errorf("expected 3 members but got %d members", len(names))
+			return fmt.Errorf("expected 3 nodes but got %d nodes", len(names))
 		}
 
 		resp := struct {
@@ -482,7 +480,7 @@ func metricsHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 		}
 		sort.Strings(names)
 		if len(names) != 3 {
-			return fmt.Errorf("expected 3 members but got %d members", len(names))
+			return fmt.Errorf("expected 3 nodes but got %d nodes", len(names))
 		}
 
 		resp := struct {
@@ -516,7 +514,6 @@ func metricsHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 			nameToMetrics[names[2]]["etcd_storage_db_total_size_in_bytes"],
 			humanize.Bytes(uint64(nameToMetrics[names[2]]["etcd_storage_db_total_size_in_bytes"])),
 		}
-
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
 			return err
 		}

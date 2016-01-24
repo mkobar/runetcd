@@ -1,16 +1,16 @@
-package run
+package etcdproc
 
 import (
 	"os"
 	"testing"
 )
 
-func TestMemberMap(t *testing.T) {
-	m := &Member{}
-	m.w = os.Stdout
-	m.PID = 0
-	mp := make(map[string]*Member)
-	mp["TEST"] = m
+func TestNodeMap(t *testing.T) {
+	nd := &Node{}
+	nd.w = os.Stdout
+	nd.PID = 0
+	mp := make(map[string]*Node)
+	mp["TEST"] = nd
 	if v, ok := mp["TEST"]; ok {
 		v.Terminated = true
 	}

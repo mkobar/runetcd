@@ -41,6 +41,7 @@ func withUserCache(h ContextHandler) ContextHandler {
 		userID := getUserID(req)
 		ctx = context.WithValue(ctx, userKey, &userID)
 
+		// TODO: reset this periodically
 		globalCache.mu.Lock()
 		// (X) this will deadlock
 		// defer globalCache.mu.Unlock()
@@ -49,12 +50,10 @@ func withUserCache(h ContextHandler) ContextHandler {
 		}
 		if _, ok := globalCache.perUserID[userID]; !ok {
 			globalCache.perUserID[userID] = &userData{
-				upgrader: &websocket.Upgrader{},
-				cluster:  nil,
-				donec:    make(chan struct{}, 10),
-
+				upgrader:  &websocket.Upgrader{},
+				cluster:   nil,
+				donec:     make(chan struct{}, 10),
 				bufStream: make(chan string, 5000),
-
 				ctlHistory: []string{
 					`etcdctlv3 put YOUR_KEY YOUR_VALUE`,
 					`etcdctlv3 range YOUR_KEY`,
@@ -62,8 +61,6 @@ func withUserCache(h ContextHandler) ContextHandler {
 			}
 		}
 		globalCache.mu.Unlock()
-
-		// TODO: reset this periodically
 
 		return h.ServeHTTPContext(ctx, w, req)
 	})

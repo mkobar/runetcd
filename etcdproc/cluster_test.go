@@ -1,4 +1,4 @@
-package run
+package etcdproc
 
 import (
 	"fmt"
@@ -31,7 +31,7 @@ func TestCreateCluster(t *testing.T) {
 	c.WriteProc(os.Stdout)
 
 	fmt.Println()
-	for k, v := range c.NameToMember {
+	for k, v := range c.NameToNode {
 		fmt.Printf("%s's ListenClientURLs: %v\n", k, v.Flags.ListenClientURLs)
 	}
 }

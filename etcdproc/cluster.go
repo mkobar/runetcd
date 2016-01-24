@@ -1,4 +1,4 @@
-package run
+package etcdproc
 
 import (
 	"fmt"
@@ -12,13 +12,13 @@ import (
 	"syscall"
 )
 
-// Cluster groups a set of process Members.
+// Cluster groups a set of process Nodes.
 type Cluster struct {
 	// define in pointer type to not copy over cluster
 	mu                *sync.Mutex // guards the following
 	maxProcNameLength *int
 	wg                *sync.WaitGroup
-	NameToMember      map[string]*Member
+	NameToNode        map[string]*Node
 }
 
 // CreateCluster creates a Cluster by parsing the input io.Reader.
@@ -34,7 +34,7 @@ func CreateCluster(w io.Writer, bufStream chan string, outputOption OutputOption
 		mu:                &sync.Mutex{},
 		maxProcNameLength: &maxProcNameLength,
 		wg:                &sync.WaitGroup{},
-		NameToMember:      make(map[string]*Member),
+		NameToNode:        make(map[string]*Node),
 	}
 
 	if err := CombineFlags(fs...); err != nil {
@@ -52,7 +52,7 @@ func CreateCluster(w io.Writer, bufStream chan string, outputOption OutputOption
 			*c.maxProcNameLength = len(name)
 		}
 
-		m := &Member{
+		nd := &Node{
 			pmu:                c.mu,
 			pmaxProcNameLength: c.maxProcNameLength,
 
@@ -68,7 +68,7 @@ func CreateCluster(w io.Writer, bufStream chan string, outputOption OutputOption
 			Terminated: false,
 			cmd:        nil,
 		}
-		c.NameToMember[name] = m
+		c.NameToNode[name] = nd
 
 		colorIdx++
 	}
@@ -78,8 +78,8 @@ func CreateCluster(w io.Writer, bufStream chan string, outputOption OutputOption
 
 func (c *Cluster) WriteProc(w io.Writer) {
 	lines := []string{}
-	for name, m := range c.NameToMember {
-		line := strings.TrimSpace(fmt.Sprintf("%s: %s %s", name, m.Command, m.Flags))
+	for name, nd := range c.NameToNode {
+		line := strings.TrimSpace(fmt.Sprintf("%s: %s %s", name, nd.Command, nd.Flags))
 		lines = append(lines, line)
 	}
 	sort.Strings(lines)
@@ -98,38 +98,38 @@ func (c *Cluster) DoneSafely(w io.Writer) {
 }
 
 func (c *Cluster) StartAll() error {
-	if len(c.NameToMember) == 0 {
+	if len(c.NameToNode) == 0 {
 		return nil
 	}
 
-	// execute all members at the same time
-	c.wg.Add(len(c.NameToMember))
-	for name, m := range c.NameToMember {
+	// execute all Nodes at the same time
+	c.wg.Add(len(c.NameToNode))
+	for name, nd := range c.NameToNode {
 
-		go func(name string, m *Member) {
+		go func(name string, nd *Node) {
 
-			defer c.DoneSafely(m)
+			defer c.DoneSafely(nd)
 
-			cs := []string{"/bin/bash", "-c", m.Command + " " + m.Flags.String()}
+			cs := []string{"/bin/bash", "-c", nd.Command + " " + nd.Flags.String()}
 			cmd := exec.Command(cs[0], cs[1:]...)
 			cmd.Stdin = nil
-			cmd.Stdout = m
-			cmd.Stderr = m
+			cmd.Stdout = nd
+			cmd.Stderr = nd
 
-			fmt.Fprintf(m, "Starting %s\n", name)
+			fmt.Fprintf(nd, "Starting %s\n", name)
 			if err := cmd.Start(); err != nil {
-				fmt.Fprintf(m, "Failed to start %s\n", name)
+				fmt.Fprintf(nd, "Failed to start %s\n", name)
 				return
 			}
-			m.cmd = cmd
-			m.PID = cmd.Process.Pid
+			nd.cmd = cmd
+			nd.PID = cmd.Process.Pid
 
 			cmd.Wait()
 
-			fmt.Fprintf(m, "Exiting %s\n", name)
+			fmt.Fprintf(nd, "Exiting %s\n", name)
 			return
 
-		}(name, m)
+		}(name, nd)
 
 	}
 
@@ -145,28 +145,28 @@ func (c *Cluster) StartAll() error {
 	return nil
 }
 
-// TerminateAll terminates all members in the group.
+// TerminateAll terminates all Nodes in the group.
 func (c *Cluster) TerminateAll() {
 	defer func() {
 		recover()
 	}()
 
-	if len(c.NameToMember) == 0 {
+	if len(c.NameToNode) == 0 {
 		return
 	}
 
-	for _, m := range c.NameToMember {
-		if err := m.Terminate(); err != nil {
-			fmt.Fprintln(m, err)
+	for _, nd := range c.NameToNode {
+		if err := nd.Terminate(); err != nil {
+			fmt.Fprintln(nd, err)
 			continue
 		}
-		c.DoneSafely(m)
+		c.DoneSafely(nd)
 	}
 }
 
 // Terminate terminates the process.
 func (c *Cluster) Terminate(name string) error {
-	if v, ok := c.NameToMember[name]; ok {
+	if v, ok := c.NameToNode[name]; ok {
 		if err := v.Terminate(); err != nil {
 			return err
 		}
@@ -176,9 +176,9 @@ func (c *Cluster) Terminate(name string) error {
 	return nil
 }
 
-// Restart restarts the etcd member.
+// Restart restarts the etcd Node.
 func (c *Cluster) Restart(name string) error {
-	if v, ok := c.NameToMember[name]; ok {
+	if v, ok := c.NameToNode[name]; ok {
 		if err := v.Restart(); err != nil {
 			return err
 		}
@@ -191,16 +191,16 @@ func (c *Cluster) Restart(name string) error {
 // RemoveAllDataDirs removes all etcd data directories.
 // Used for cleaning up.
 func (c *Cluster) RemoveAllDataDirs() {
-	for k, m := range c.NameToMember {
+	for k, nd := range c.NameToNode {
 		func() {
 			defer func() {
 				if err := recover(); err != nil {
-					fmt.Fprintf(m, "panic while deleting %s (%v)\n", m.Flags.DataDir, err)
+					fmt.Fprintf(nd, "panic while deleting %s (%v)\n", nd.Flags.DataDir, err)
 				}
 			}()
-			fmt.Fprintf(m, "Deleting data-dir for %s (%s)\n", k, m.Flags.DataDir)
-			if err := os.RemoveAll(m.Flags.DataDir); err != nil {
-				fmt.Fprintf(m, "error while deleting %s (%v)\n", m.Flags.DataDir, err)
+			fmt.Fprintf(nd, "Deleting data-dir for %s (%s)\n", k, nd.Flags.DataDir)
+			if err := os.RemoveAll(nd.Flags.DataDir); err != nil {
+				fmt.Fprintf(nd, "error while deleting %s (%v)\n", nd.Flags.DataDir, err)
 			}
 		}()
 	}
