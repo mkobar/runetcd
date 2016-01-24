@@ -15,7 +15,7 @@ func TestFlagsTag(t *testing.T) {
 	if !ok {
 		t.Error("Name field not found")
 	}
-	if string(field.Tag) != "name" {
+	if string(field.Tag.Get("flag")) != "name" {
 		t.Errorf("expected 'name' but got %s", string(field.Tag))
 	}
 }

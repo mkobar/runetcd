@@ -171,6 +171,112 @@ func (c *Cluster) Stress(
 	return nil
 }
 
+func (c *Cluster) SimpleStress(w io.Writer, outputOption OutputOption, name string) error {
+
+	endpoint := ""
+	m, ok := c.NameToMember[name]
+	if !ok {
+		return fmt.Errorf("%s does not exist in the Cluster!", name)
+	} else {
+		if m.Flags.ExperimentalgRPCAddr == "" {
+			return fmt.Errorf("no experimental-gRPC-addr found for %s", name)
+		}
+		endpoint = m.Flags.ExperimentalgRPCAddr
+	}
+
+	stressN := 10
+	connsN := 1
+	clientsN := 1
+	switch m.outputOption {
+	case ToTerminal:
+		fmt.Fprintf(m.w, "[Stress] Started generating %d random data...\n", stressN)
+	case ToHTML:
+		m.BufferStream <- fmt.Sprintf("[Stress] Started generating %d random data to %s", stressN, name)
+		if f, ok := m.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
+
+	sr := time.Now()
+	keys := make([][]byte, stressN)
+	vals := make([][]byte, stressN)
+	for i := range keys {
+		keys[i] = []byte(fmt.Sprintf("random_key_%d", i))
+		vals[i] = []byte(fmt.Sprintf(`{"value": "this is random value created at %s"}`, time.Now().String()[:19]))
+	}
+	switch m.outputOption {
+	case ToTerminal:
+		fmt.Fprintf(m.w, "[Stress] Done with generating %d random data! Took %v\n", stressN, time.Since(sr))
+	case ToHTML:
+		m.BufferStream <- fmt.Sprintf("[Stress] Done with generating %d random data! Took %v\n", stressN, time.Since(sr))
+		if f, ok := m.w.(http.Flusher); ok {
+			if f != nil {
+				f.Flush()
+			}
+		}
+	}
+
+	conns := make([]*grpc.ClientConn, connsN)
+	for i := range conns {
+		conns[i] = mustCreateConn(endpoint)
+	}
+	clients := make([]etcdserverpb.KVClient, clientsN)
+	for i := range clients {
+		clients[i] = etcdserverpb.NewKVClient(conns[i%int(connsN)])
+	}
+
+	fmt.Fprintf(w, "[Stress] Started stressing with GRPC (endpoint %s).\n", endpoint)
+
+	requests := make(chan *etcdserverpb.PutRequest, stressN)
+	done, errChan := make(chan struct{}), make(chan error)
+
+	for i := range clients {
+		go func(i int, requests <-chan *etcdserverpb.PutRequest) {
+			for r := range requests {
+				if _, err := clients[i].Put(context.Background(), r); err != nil {
+					errChan <- err
+					return
+				}
+			}
+			done <- struct{}{}
+		}(i, requests)
+	}
+
+	st := time.Now()
+
+	for i := 0; i < stressN; i++ {
+		r := &etcdserverpb.PutRequest{
+			Key:   keys[i],
+			Value: vals[i],
+		}
+		requests <- r
+	}
+
+	close(requests)
+
+	cn := 0
+	for cn != len(clients) {
+		select {
+		case err := <-errChan:
+			return err
+		case <-done:
+			cn++
+		}
+	}
+
+	tt := time.Since(st)
+	pt := tt / time.Duration(stressN)
+	fmt.Fprintf(
+		w,
+		"[Stress] Done! Took %v for %d requests(%v per each) with %d connection(s), %d client(s) (endpoint: %s)\n",
+		tt, stressN, pt, connsN, clientsN, endpoint,
+	)
+	fmt.Fprintf(w, "\n")
+	return nil
+}
+
 // WatchAndPut watches key and later put that key
 // so that the watcher can return.
 func (c *Cluster) WatchAndPut(w io.Writer, name string, connsN, streamsN, watchersN int) error {
