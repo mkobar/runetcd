@@ -925,6 +925,7 @@
                 <ul class="nav nav-sidebar">
                     <li><a href="#demo">Demo</a></li>
                     <li><a href="#log">Log</a></li>
+                    <li><a href="#help"><i class="fa fa-question"></i></a></li>
                 </ul>
             </div>
             <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
@@ -1018,8 +1019,129 @@
                     <div id="log_output">
                     </div>
                 </div>
+                <br>
+                <br>
+                <br>
+                <h2 class="sub-header" id="help">Help</h2>
+                <div class="row">
+                    <div class="col-md-9">
+                        <style type="text/css">
+                        .tg {
+                            border-collapse: collapse;
+                            border-spacing: 0;
+                            border-color: #ccc;
+                        }
+                        
+                        .tg td {
+                            font-family: Arial, sans-serif;
+                            font-size: 14px;
+                            padding: 10px 5px;
+                            border-style: solid;
+                            border-width: 1px;
+                            overflow: hidden;
+                            word-break: normal;
+                            border-color: #ccc;
+                            color: #333;
+                            background-color: #fff;
+                        }
+                        
+                        .tg th {
+                            font-family: Arial, sans-serif;
+                            font-size: 14px;
+                            font-weight: normal;
+                            padding: 10px 5px;
+                            border-style: solid;
+                            border-width: 1px;
+                            overflow: hidden;
+                            word-break: normal;
+                            border-color: #ccc;
+                            color: #333;
+                            background-color: #f0f0f0;
+                        }
+                        
+                        .tg .tg-1 {
+                            text-align: center;
+                            margin: auto;
+                            vertical-align: center;
+                        }
+
+                        .tg .tg-2 {
+                            padding-left: 10px;
+                            padding-right: 7px;
+                            vertical-align: center;
+                        }
+                        </style>
+                        <table class="tg">
+                            <tr>
+                                <th class="tg-1">button</th>
+                                <th class="tg-1">description</th>
+                            </tr>
+                            <tr>
+                                <td class="tg-1">
+                                    <button type="button" class="btn btn-secondary btn-sm">Start</button>
+                                </td>
+                                <td class="tg-2">start the 3-member cluster</td>
+                            </tr>
+                            <tr>
+                                <td class="tg-1">
+                                    <button type="button" class="btn btn-secondary btn-sm">Stress</button>
+                                </td>
+                                <td class="tg-2">stress the cluster with random key-values</td>
+                            </tr>
+                            <tr>
+                                <td class="tg-1">
+                                    <button type="button" class="btn btn-default btn-sm">Submit</button>
+                                </td>
+                                <td class="tg-2">submit your own etcdctl commands</td>
+                            </tr>
+                            <tr>
+                                <td class="tg-1">
+                                    <button type="button" class="btn btn-secondary-outline btn-sm"><i class="fa fa-pause-circle"></i></button>
+                                </td>
+                                <td class="tg-2">node status before start</td>
+                            </tr>
+                            <tr>
+                                <td class="tg-1">
+                                    <button type="button" class="btn btn-danger btn-sm"><i class="fa fa-frown-o"></i></button>
+                                </td>
+                                <td class="tg-2">when the node is not reachable (killed or error-ed)</td>
+                            </tr>
+                            <tr>
+                                <td class="tg-1">
+                                    <button type="button" class="btn btn-warning btn-sm"><i class="fa fa-child"></i></button>
+                                </td>
+                                <td class="tg-2">when the node is the follower (StateFollower)</td>
+                            </tr>
+                            <tr>
+                                <td class="tg-1">
+                                    <button type="button" class="btn btn-info btn-sm"><i class="fa fa-star-half-o"></i></button>
+                                </td>
+                                <td class="tg-2">when the node is the candidate (StateCandidate)</td>
+                            </tr>
+                            <tr>
+                                <td class="tg-1">
+                                    <button type="button" class="btn btn-primary btn-sm"><i class="fa fa-fort-awesome"></i></button>
+                                </td>
+                                <td class="tg-2">when the node is the leader (StateLeader)</td>
+                            </tr>
+                            <tr>
+                                <td class="tg-1">
+                                    <button type="button" class="btn btn-danger btn-sm"><i class="fa fa-bomb"></i></button>
+                                </td>
+                                <td class="tg-2">kill the node</td>
+                            </tr>
+                            <tr>
+                                <td class="tg-1">
+                                    <button type="button" class="btn btn-success btn-sm"><i class="fa fa-ambulance"></i></button>
+                                </td>
+                                <td class="tg-2">recover the node</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
     </div>
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://code.jquery.com/ui/1.12.0-beta.1/jquery-ui.js"></script>

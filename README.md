@@ -81,6 +81,12 @@ You can use this as an `etcd` dashboard:
 
 ## Progress
 
+##### 00:07AM Sunday, January 24th, 2016
+
+Add help page!
+
+![changelogs_04](./changelogs/changelogs_04.png)
+
 <br><br><br>
 ##### 11:20PM Saturday, January 23rd, 2016
 
