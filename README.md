@@ -1,3 +1,6 @@
+I dumped a lot of code without much documentation and optimization. There are LOTS OF things to improve. I am now losing write access to this repository. And I will keep working on this even after this Hackathon. Further work will be continued at https://github.com/gyuho/runetcd.
+
+
 ## runetcd [![Build Status](https://img.shields.io/travis/gophergala2016/runetcd.svg?style=flat-square)](https://travis-ci.org/gophergala2016/runetcd) [![Godoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://godoc.org/github.com/gophergala2016/runetcd)
 
 **Distributed Reliable Key-Value Store `etcd` Visualized**
@@ -103,6 +106,72 @@ go get -v -u golang.org/x/net/context
 
 
 ## Progress
+
+##### Sun January 24 2016 16:25 PM
+
+Deploy!
+
+```bash
+sudo vi /etc/security/limits.conf;
+
+# add the following lines
+* soft nofile 120000
+* hard nofile 120000
+
+# and reboot the machine
+# or log out/in
+
+ulimit -Sn
+
+
+sudo apt-get -y install git;
+sudo apt-get -y install screen;
+
+echo "[user]
+  email = gyuhox@gmail.com
+  name = Gyu-Ho Lee
+[color]
+  diff = auto
+  status = auto
+  branch = auto
+  ui = auto" > $HOME/.gitconfig;
+
+git config --global user.name "Gyu-Ho Lee";
+git config --global user.email "gyuhox@gmail.com";
+git config --global core.editor "vim";
+
+cd $HOME && \
+mkdir -p $HOME/go/src && \
+mkdir -p $HOME/go/src/github.com && \
+mkdir -p $HOME/go/src/github.com/coreos && \
+mkdir -p $HOME/go/src/github.com/gyuho && \
+mkdir -p $HOME/go/src/golang.org;
+
+# install latest go
+cd /usr/local && sudo rm -rf ./go;
+sudo curl -s https://storage.googleapis.com/golang/go1.6beta2.linux-amd64.tar.gz | sudo tar -v -C /usr/local/ -xz;
+
+
+if grep -q GOPATH "$(echo $HOME)/.bashrc"; then 
+	echo "bashrc already has GOPATH...";
+else
+	echo "adding GOPATH to bashrc...";
+	echo "export GOPATH=$(echo $HOME)/go" >> $HOME/.bashrc && \
+	PATH_VAR=$PATH":/usr/local/go/bin:$(echo $HOME)/go/bin" && \
+	echo "export PATH=$(echo $PATH_VAR)" >> $HOME/.bashrc && \
+	source $HOME/.bashrc;
+fi
+
+cd $HOME && \
+printf "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Println(\"Successfully installed Go.\")\n}" > $HOME/temp.go;
+cd $HOME && go run temp.go && rm -f temp.go && go version;
+
+
+go get -v github.com/gophergala2016/runetcd
+runetcd demo-web -b $GOPATH/src/github.com/gophergala2016/runetcd/bin/etcd
+```
+
+![changelogs_10](./changelogs/changelogs_10.jpg)
 
 <br><br><br>
 ##### Sun January 24 2016 14:20 PM
