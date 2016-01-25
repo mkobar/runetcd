@@ -173,7 +173,7 @@ runetcd demo-web -b $GOPATH/src/github.com/gophergala2016/runetcd/bin/etcd
 
 Need to figure out web socket issue... but running out of time...
 
-![changelogs_10](./changelogs/changelogs_10.jpg)
+![changelogs_10](./changelogs/changelogs_10.png)
 
 <br><br><br>
 ##### Sun January 24 2016 14:20 PM
