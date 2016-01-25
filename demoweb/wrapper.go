@@ -2,6 +2,7 @@ package demoweb
 
 import (
 	"net/http"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
@@ -64,4 +65,33 @@ func withUserCache(h ContextHandler) ContextHandler {
 
 		return h.ServeHTTPContext(ctx, w, req)
 	})
+}
+
+func withLogrus(h http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.WithFields(log.Fields{
+					"event_type": "error",
+					"referrer":   req.Referer(),
+					"ua":         req.UserAgent(),
+					"path":       req.URL.Path,
+					"real_ip":    getRealIP(req),
+					"error":      err,
+				}).Errorln("withLogrus error")
+			}
+		}()
+
+		start := nowPacific()
+		h.ServeHTTP(w, req)
+		took := time.Since(start)
+
+		log.WithFields(log.Fields{
+			"event_type": "ok",
+			"referrer":   req.Referer(),
+			"ua":         req.UserAgent(),
+			"path":       req.URL.Path,
+			"real_ip":    getRealIP(req),
+		}).Debugf("took %s", took)
+	}
 }

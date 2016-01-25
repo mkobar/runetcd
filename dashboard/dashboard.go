@@ -60,7 +60,11 @@ func CommandFunc(cmd *cobra.Command, args []string) {
 	defer cancel()
 
 	mainRouter := http.NewServeMux()
-	mainRouter.Handle("/", http.FileServer(http.Dir("./dashboard_frontend")))
+	// mainRouter.Handle("/", http.FileServer(http.Dir("./dashboard_frontend")))
+	mainRouter.Handle("/", &ContextAdapter{
+		ctx:     rootContext,
+		handler: ContextHandlerFunc(staticHandler),
+	})
 
 	mainRouter.Handle("/endpoint", &ContextAdapter{
 		ctx:     rootContext,

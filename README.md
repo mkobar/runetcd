@@ -30,9 +30,7 @@ So must `etcd` be easy to try and play.
 
 Public demo here https://runetcd.io.
 
-```
-
-```
+![demo_00](./changelogs/demo_00.jpg)
 
 It runs exactly the same `etcd` cluster as in production. Each client launches
 N number of machines and writes to the distributed database.
@@ -42,8 +40,14 @@ Distributed database does A LOT OF RPC calls. So it's very easy to overload
 experience full-powered `etcd`, PLEASE run CLI locally. And here's how:
 
 ```
+go get -v github.com/gophergala2016/runetcd
+runetcd demo-web -b $GOPATH/src/github.com/gophergala2016/runetcd/bin/etcd
 
+# or specify your etcd binary path
 
+# or to run quick simulation in terminal
+runetcd demo
+# cluster start, fail, recover, stress, put, range, watch, ...
 ```
 
 It's that easy! Just etcd binary and internet connection for javascript
@@ -59,8 +63,13 @@ https://github.com/rakyll/statik.
 You can use this as an `etcd` dashboard:
 
 ```
+go get -v github.com/gophergala2016/runetcd
+runetcd dashboard
 
+# and type your etcd client endpoints
 ```
+
+![demo_01](./changelogs/demo_01.jpg)
 
 [↑ top](#runetcd--)
 <br><br>
@@ -85,6 +94,7 @@ go get -v -u github.com/gorilla/websocket
 go get -v -u github.com/gyuho/psn/ss
 go get -v -u github.com/satori/go.uuid
 go get -v -u github.com/spf13/cobra
+go get -v -u github.com/tylerb/graceful
 go get -v -u golang.org/x/net/context
 ```
 

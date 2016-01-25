@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/user"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,6 +17,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/gyuho/psn/ss"
 	"github.com/spf13/cobra"
+	"github.com/tylerb/graceful"
 )
 
 type Flag struct {
@@ -69,6 +73,32 @@ func init() {
 func init() {
 	log.SetFormatter(new(log.JSONFormatter))
 	log.SetLevel(log.DebugLevel)
+
+	// logInterval = 3 * time.Second
+	// setLog := func() {
+	// 	lp := strings.Replace(nowPacific().String()[:19], "-", "", -1)
+	// 	lp = strings.Replace(lp, ":", "", -1)
+	// 	lp = strings.Replace(lp, ".", "", -1)
+	// 	lp = strings.Replace(lp, " ", "", -1)
+	// 	fpath := "runetcd_" + lp + ".log"
+	// 	f, err := openToAppend(fpath)
+	// 	if err != nil {
+	// 		fmt.Fprintln(os.Stdout, err)
+	// 		return
+	// 	}
+	// 	log.SetOutput(f)
+	// 	time.Sleep(logInterval)
+	// 	f.Close()
+	// }
+	// setLog()
+	// go func() {
+	// 	for {
+	// 		select {
+	// 		case <-time.After(logInterval):
+	// 			setLog()
+	// 		}
+	// 	}
+	// }()
 }
 
 func init() {
@@ -90,11 +120,34 @@ func init() {
 }
 
 func CommandFunc(cmd *cobra.Command, args []string) {
+	lp := strings.Replace(nowPacific().String()[:19], "-", "", -1)
+	lp = strings.Replace(lp, ":", "", -1)
+	lp = strings.Replace(lp, ".", "", -1)
+	lp = strings.Replace(lp, " ", "", -1)
+
+	usr, err := user.Current()
+	if err != nil {
+		fmt.Fprintln(os.Stdout, err)
+	}
+
+	f, err := openToAppend(filepath.Join(usr.HomeDir, "runetcd_"+lp+".log"))
+	if err != nil {
+		fmt.Fprintln(os.Stdout, err)
+		return
+	}
+	defer f.Close()
+	log.SetOutput(f)
+
 	rootContext, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	mainRouter := http.NewServeMux()
-	mainRouter.Handle("/", http.FileServer(http.Dir("./demoweb_frontend")))
+
+	// mainRouter.Handle("/", http.FileServer(http.Dir("./demoweb_frontend")))
+	mainRouter.Handle("/", &ContextAdapter{
+		ctx:     rootContext,
+		handler: ContextHandlerFunc(staticHandler),
+	})
 
 	mainRouter.Handle("/ws", &ContextAdapter{
 		ctx:     rootContext,
@@ -157,8 +210,10 @@ func CommandFunc(cmd *cobra.Command, args []string) {
 	})
 
 	fmt.Fprintln(os.Stdout, "Serving http://localhost"+webPort)
-	if err := http.ListenAndServe(webPort, mainRouter); err != nil {
-		fmt.Fprintln(os.Stdout, "[runetcd demo-web error]", err)
-		os.Exit(0)
-	}
+	// if err := http.ListenAndServe(webPort, mainRouter); err != nil {
+	// 	fmt.Fprintln(os.Stdout, "[runetcd demo-web error]", err)
+	// 	os.Exit(0)
+	// }
+	// graceful.Run(webPort, 10*time.Second, withLogrus(mainRouter))
+	graceful.Run(webPort, 10*time.Second, mainRouter)
 }
