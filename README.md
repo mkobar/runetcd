@@ -1,4 +1,7 @@
-I dumped a lot of code without much documentation and optimization. There are LOTS OF things to improve. I am now losing write access to this repository. And I will keep working on this even after this Hackathon. Further work will be continued at https://github.com/gyuho/runetcd.
+I dumped a lot of code without much documentation and optimization.
+There are LOTS OF things to improve. I am now losing write access to this
+repository. And I will keep working on this even after this Hackathon.
+Further work will be continued at https://github.com/gyuho/runetcd.
 
 
 ## runetcd [![Build Status](https://img.shields.io/travis/gophergala2016/runetcd.svg?style=flat-square)](https://travis-ci.org/gophergala2016/runetcd) [![Godoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://godoc.org/github.com/gophergala2016/runetcd)
