@@ -30,7 +30,7 @@ So must `etcd` be easy to try and play.
 
 Public demo here https://runetcd.io.
 
-![demo_00](./changelogs/demo_00.jpg)
+![demo_00](./changelogs/demo_00.png)
 
 It runs exactly the same `etcd` cluster as in production. Each client launches
 N number of machines and writes to the distributed database.
@@ -69,7 +69,7 @@ runetcd dashboard
 # and type your etcd client endpoints
 ```
 
-![demo_01](./changelogs/demo_01.jpg)
+![demo_01](./changelogs/demo_01.png)
 
 [↑ top](#runetcd--)
 <br><br>
