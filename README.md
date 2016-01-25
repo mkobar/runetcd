@@ -171,6 +171,8 @@ go get -v github.com/gophergala2016/runetcd
 runetcd demo-web -b $GOPATH/src/github.com/gophergala2016/runetcd/bin/etcd
 ```
 
+Need to figure out web socket issue... but running out of time...
+
 ![changelogs_10](./changelogs/changelogs_10.jpg)
 
 <br><br><br>
