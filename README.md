@@ -34,6 +34,8 @@ So must `etcd` be easy to try and play.
 Public demo here https://runetcd.io. (Fixing DNS issue right now. Please
 run locally for now. Sorry)
 
+Please visit http://23.236.62.97:8000/ in the meantime.
+
 ![demo_00](./changelogs/demo_00.png)
 
 It runs exactly the same `etcd` cluster as in production. Each client launches
