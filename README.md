@@ -3,6 +3,9 @@ There are LOTS OF things to improve. I am now losing write access to this
 repository. And I will keep working on this even after this Hackathon.
 Further work will be continued at https://github.com/gyuho/runetcd.
 
+Currently this works well locally, but I ran out of time deploying to public.
+I will fix it later. See below for more details.
+
 
 ## runetcd [![Build Status](https://img.shields.io/travis/gophergala2016/runetcd.svg?style=flat-square)](https://travis-ci.org/gophergala2016/runetcd) [![Godoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://godoc.org/github.com/gophergala2016/runetcd)
 
