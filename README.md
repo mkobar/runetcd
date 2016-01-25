@@ -31,7 +31,8 @@ So must `etcd` be easy to try and play.
 
 ## 10-second Demo
 
-Public demo here https://runetcd.io.
+Public demo here https://runetcd.io. (Fixing DNS issue right now. Please
+run locally for now. Sorry)
 
 ![demo_00](./changelogs/demo_00.png)
 
